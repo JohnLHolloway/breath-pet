@@ -2,7 +2,7 @@
 
 [Project home](../../README.md) · [Gameplay](../GAMEPLAY.md) · [Wiring](../../MQ3_WIRING.md) · [Capture instructions](../DEVELOPMENT.md#screenshots)
 
-Captured **2026-09-22** from firmware **version 7** on the LILYGO T-Display-S3. These are native **320 × 170 ESP32 framebuffer exports**, not photos or panel readback. The fixtures use fictional Captain, Goose and Bean pets in separate test storage. **TEST means isolated firmware; every sensor reading in this gallery is synthetic, including entries labeled MQ3.** Normal firmware instead labels its mode LIVE or DEMO.
+Captured **2026-09-22** from firmware **version 8** on the LILYGO T-Display-S3. These are native **320 × 170 ESP32 framebuffer exports**, not photos or panel readback. The fixtures use fictional Captain, Goose and Bean pets in separate test storage. **TEST means isolated firmware; every sensor reading in this gallery is synthetic, including entries labeled MQ3.** Normal firmware instead labels its mode LIVE or DEMO.
 
 The same left-side NEXT/OK rail and gold action bar are used throughout. Hold the upper button for Back and the lower for Menu. The gallery replaces older screenshots of the previous menus and multiple care bars.
 

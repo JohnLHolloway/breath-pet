@@ -84,7 +84,7 @@ Personalities are stable by nickname. Captain leads parades, Goose plays hat pra
 
 ## Shared tank and evening menu
 
-Shared rewarded check-ins unlock the jukebox at **2**, pirate ship at **5**, and disco ball at **8**. These totals persist across evenings. An eligible check-in can unlock the disco ball early and trigger 15 seconds of confetti when there are at least two pets, every pet has checked in this evening, and everyone has been active within the last ten powered minutes.
+Shared rewarded check-ins unlock the jukebox at **2**, pirate ship at **5**, and disco ball at **8**. These totals and decorations reset with a new evening. An eligible check-in can unlock the disco ball early and trigger 15 seconds of confetti when there are at least two pets, every pet has checked in this evening, and everyone has been active within the last ten powered minutes.
 
 | Evening menu option | Purpose |
 | --- | --- |

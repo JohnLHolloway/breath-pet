@@ -59,7 +59,7 @@ cd breath-pet
 
 The helper creates a local Python environment and installs development tools. Replace COM3 with your board's port. Close any serial monitor before uploading. If connection fails, hold BOOT, press and release RST, release BOOT, then retry the upload.
 
-[Development instructions](docs/DEVELOPMENT.md) cover other platforms, dependencies, serial commands, isolated device tests and screenshot capture. [Hardware verification](HARDWARE_TEST.md) records the tested board, the 99-check suite and what remains physically unverified.
+[Development instructions](docs/DEVELOPMENT.md) cover other platforms, dependencies, serial commands, isolated device tests and screenshot capture. [Hardware verification](HARDWARE_TEST.md) records the tested board, the 105-check suite and what remains physically unverified.
 
 ## Screenshots and licensing
 

@@ -1,14 +1,14 @@
 # Hardware verification
 
-Status: **2026-09-22, firmware version 7**. [Project home](README.md) · [Development](docs/DEVELOPMENT.md) · [Current gallery](docs/screenshots/README.md)
+Status: **2026-09-22, firmware version 8**. [Project home](README.md) · [Development](docs/DEVELOPMENT.md) · [Current gallery](docs/screenshots/README.md)
 
 ## Current evidence
 
 | Area | Evidence | Scope |
 | --- | --- | --- |
 | Build and flash | Normal and isolated test firmware built/uploaded successfully; upload flash hashes verified | LILYGO T-Display-S3, ESP32-S3 revision 0.2, 16 MB flash, 8 MB PSRAM |
-| Device integration suite | **99 / 99 checks passed**, run timestamp `2026-09-22T17:48:02Z` | Latest firmware source; includes synthetic ADC and accelerated game time |
-| Firmware self-test | Passed on normal firmware | Rule boundaries, migration, stat limits and history rollover |
+| Device integration suite | **105 / 105 checks passed**, run timestamp `2026-09-22T19:56:15.715273+00:00` | Latest firmware source; includes synthetic ADC and accelerated game time |
+| Firmware self-test | Passed in isolated device suite | Rule boundaries, migration, history rollover, colour rewards and full evening reset |
 | Physical display/buttons | User confirmed the displayed pet and both buttons | Current screen layout was additionally reviewed via framebuffer exports |
 | Touch | No controller responded to probes or a full I2C scan | Operation on a touch-equipped variant remains unverified |
 | Physical MQ-3 response | Cup vapor caused a rise and recovery; real-source history was saved | Qualitative response only, not concentration/BAC calibration |
@@ -16,7 +16,7 @@ Status: **2026-09-22, firmware version 7**. [Project home](README.md) · [Develo
 | Current gallery | **20 fresh device framebuffer captures**, fictional test pets and injected ADC | All images reviewed; no real player readings published |
 | Normal restoration | After gallery capture, normal firmware reported LIVE, `test_mode: false`, and healthy game/collection saves | Roster, all eight existing history entries, sensitivity and collected/equipped items matched private before/after snapshots |
 
-The documentation refresh did not modify firmware source. The 99-check result predates the refresh; it is not presented as a new full-suite run. Both firmware environments were rebuilt/uploaded during gallery capture, and restoration/data-preservation checks ran afterward. Private serial reports and normal snapshots remain in ignored local artifacts.
+Firmware v8 changes a confirmed new evening into a complete game-progress reset, including clothes, colours and shared decorations. The 105-check suite ran on the board with isolated saves; both firmware environments were built, and normal firmware was restored after gallery capture. Private serial reports and normal snapshots remain in ignored local artifacts.
 
 ## Automated coverage
 
@@ -35,7 +35,7 @@ Test saves use `breath-test` and `fun-test`; normal saves use `breath-pet` and `
 
 The [gallery](docs/screenshots/README.md) replaces screenshots from earlier interfaces. It covers adoption, tank states, pet belongings, wardrobe, bubble catch, countdown, capture, result/history, recovery, menu, sensitivity, bench diagnostics, awards, upgrades and new-evening confirmation. Every selectable page uses the same physical-button rail and gold action bar. The pet page has one energy meter; tank labels show each pet's state.
 
-These are **rendered framebuffer exports**, not photos or physical panel readback. The TEST badge identifies isolated firmware. Even when an image says MQ3, the gallery's sensor input is injected; it is not a human reading. [The manifest](docs/screenshots/manifest.json) records the capture date, firmware version, source revision and binary/image hashes. Original source for this capture is commit `28a285d`.
+These are **rendered framebuffer exports**, not photos or physical panel readback. The TEST badge identifies isolated firmware. Even when an image says MQ3, the gallery's sensor input is injected; it is not a human reading. [The manifest](docs/screenshots/manifest.json) records the capture date, firmware version, source revision and binary/image hashes. Original source for this capture is commit `cf34876`.
 
 ## Persistence
 
@@ -45,7 +45,7 @@ The gallery utility compares normal saved fields and exact histories before and 
 
 ## Physical limits and next checks
 
-The [Rev A carrier PCB and printed case](hardware/README.md) are a separate, **unbuilt** hardware prototype. KiCad ERC/DRC/parity checks, netlist assertions, manufacturing exports and nominal CAD collision checks pass; no fabricated carrier or printed enclosure has been tested. These CAD checks do not extend the breadboard's 99-check firmware result to the new hardware. Donor-can identification, fit gauges, component matching, meter checks, cup response and heat testing remain.
+The [Rev A carrier PCB and printed case](hardware/README.md) are a separate, **unbuilt** hardware prototype. KiCad ERC/DRC/parity checks, netlist assertions, manufacturing exports and nominal CAD collision checks pass; no fabricated carrier or printed enclosure has been tested. These CAD checks do not extend the breadboard's 105-check firmware result to the new hardware. Donor-can identification, fit gauges, component matching, meter checks, cup response and heat testing remain.
 
 The planned assembly uses 5 V module power, common ground and two 8 kΩ resistor chains between AO, GPIO1 and GND. **Divider voltages have not been independently verified with a meter.** See the [wiring checks](MQ3_WIRING.md#verify-the-divider).
 
