@@ -37,7 +37,7 @@ Touch uses the same flows when a supported controller responds. Firmware probes 
 
 ## Game rules â€” not alcohol units
 
-The provisional clean-air band is **50–250 mV at GPIO1**. A peak of **251–399 mV** is an uncertain response and scores zero; **400 mV or more** enables response scoring. Below 400 mV, a clean-air/weak-response feeding still gives the normal zero-score reward.
+The provisional clean-air band is **50â€“250 mV at GPIO1**. A peak of **251â€“399 mV** is an uncertain response and scores zero; **400 mV or more** enables response scoring. Below 400 mV, a clean-air/weak-response feeding still gives the normal zero-score reward.
 
 At or above 400 mV, live score is `clamp(max(0, peak_mV - baseline_mV - 20) * 100 / sensor_span_mV, 0, 100)`. The default span is now **1200 mV**, twice the previous range, so the same response scores about half as much. For the observed baseline of 139 mV and cup peak of 852 mV, the new score is **57** instead of 100: feeding without damage. With that baseline, overload starts at 999 mV (score 70). The threshold moves with the fresh baseline and response setting; 400 mV is not the overload threshold.
 
@@ -62,7 +62,7 @@ Samples carry a global sequence number plus boot number and seconds since that b
 2. The screen collects a fresh 100-sample window (at least ten seconds). Every sample must be between 50 and 250 mV, with a window spread no greater than 25 mV.
 3. When ready, press OK, then bring cup vapor near the dry sensor for 5â€“10 seconds. The full capture lasts 12 seconds; its fresh-air baseline stays frozen.
 4. The peak rise determines the game score. A clean-air capture with no rise gives a score of zero and still feeds the pet; alcohol is not required.
-5. Remove the cup. The next feeding waits for another full quiet window in the 50–250 mV clean-air band. This applies to every pet, including after cancelling, and allows normal baseline drift within that band. Recovery may take a minute or longer.
+5. Remove the cup. The next feeding waits for another full quiet window in the 50â€“250 mV clean-air band. This applies to every pet, including after cancelling, and allows normal baseline drift within that band. Recovery may take a minute or longer.
 
 Holding Back or Menu cancels without a history entry. Readings below 20 mV or above 2700 mV during capture, or fewer than 80 acquired samples, reject the capture without changing pet stats. These checks cannot detect every wiring fault. Fresh air must actually be clean air; a stable alcohol plume cannot be automatically identified as a bad baseline. The fresh clean-air window is required after power-up too; a stable reading above 250 mV cannot start a feeding.
 
