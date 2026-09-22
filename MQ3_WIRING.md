@@ -4,7 +4,7 @@ The ACEIRMC module's listing specifies **5 V VCC**, GND, AO (analog output) and 
 
 ## Proposed USB-powered wiring
 
-Power off before wiring. Use a breadboard/jumper wires and two 10 kΩ resistors:
+Power off before wiring. The user has nine 2 kΩ resistors. Use **eight of them**: four in series form the upper 8 kΩ resistance, and four more in series form the lower 8 kΩ resistance. One resistor remains spare. This gives the same 1:2 voltage division as the previously proposed pair of 10 kΩ resistors.
 
 | Module | Connection |
 | --- | --- |
@@ -14,18 +14,16 @@ Power off before wiring. Use a breadboard/jumper wires and two 10 kΩ resistors:
 | DO | Leave disconnected |
 
 ```text
-MQ-3 AO ---- 10 kΩ ----+---- GPIO1 (ADC1_CH0)
-                      |
-                    10 kΩ
-                      |
-                     GND
+MQ-3 AO -- 2k -- 2k -- 2k -- 2k --+-- GPIO1 (ADC1_CH0)
+                                 |
+                                 +-- 2k -- 2k -- 2k -- 2k -- GND
 ```
 
 Equal resistor values halve the analog voltage: a 5 V module output becomes 2.5 V at GPIO1. **Do not connect AO directly to an ESP32 input.** Configure that ADC input for its widest attenuation range; Espressif documents up to approximately 3.1 V for the ESP32-S3 at 11 dB. [Espressif ADC documentation](https://docs.espressif.com/projects/arduino-esp32/en/latest/api/adc.html)
 
 GPIO1 is exposed as ADC1_CH0 on LILYGO's header and is unused by this firmware. The sensor's heater should use the 5 V supply, not a GPIO or the 3 V pin. [LILYGO pin map](https://github.com/Xinyuan-LilyGO/T-Display-S3/blob/main/image/T-DISPLAY-S3-TOUCH.png)
 
-A typical four-band 10 kΩ resistor is **brown–black–orange**, followed by its tolerance band (often gold). Verify resistance with a meter when available; other band counts use a different reading scheme. We have not identified the user's resistors or verified any wiring yet.
+A typical four-band 2 kΩ resistor is **red–black–red**, followed by its tolerance band (often gold). Verify resistance with a meter when available; other band counts use a different reading scheme. Resistor values have been reported by the user; physical wiring has not been verified.
 
 ## Remaining implementation and testing
 
