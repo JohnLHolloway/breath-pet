@@ -1,8 +1,0 @@
-Designator,Quantity,Part,Notes
-"J1,J2",2,1x12 female socket 2.54mm pitch,8.5mm body assumed in CAD; straight top-entry; verify stack
-LILYGO headers,2,1x12 male header 2.54mm pitch,Omit if already soldered; pins face carrier; 2.54mm spacer assumed
-JP1,1,1x2 male header 2.54mm + shunt,Fit shunt for USB-powered operation
-S1,1,Bare MQ-3 can - exact variant not selected,Classic 9.5mm pin circle; verify donor fit and electrode pairs
-J3,0,JST B3B-XH-A 3pin 2.50mm,DNP for direct sensor; external module variant only
-PCB screws,3,M2.5 x 4mm suitable for plastic pilot holes,1.6mm PCB on printed 3mm bosses; verify engagement
-Case screws,4,M2 x 6mm suitable for plastic pilot holes,2mm cover; 1.6mm pilot holes; do not overtighten

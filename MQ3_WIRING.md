@@ -4,8 +4,6 @@
 
 This USB-powered setup uses an ACEIRMC MQ-3 module, a LILYGO T-Display-S3 and **eight 2 kΩ resistors**. A ninth resistor can remain spare. Follow the labels on your actual boards; the diagram is a logical connection map, not header order.
 
-For the custom PCB, use the separate [Rev A carrier guide](hardware/README.md). That unbuilt design includes its own divider and can take a bare sensor; do not stack this breadboard divider onto it. Its optional module connector is a different assembly variant with an explicit pin order.
-
 ![MQ-3 to LILYGO: 5 V supply, common ground and an eight-resistor divider to GPIO1](docs/mq3-wiring.png)
 
 Dots mark connections. Crossings without dots are not connected.
