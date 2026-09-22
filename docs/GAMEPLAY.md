@@ -76,9 +76,9 @@ History on the device shows level, source, reaction and age. USB history also in
 A completed feeding or bubble game earns at most **one rewarded check-in per pet per ten powered minutes**. Extra play or feeding still wakes the pet but earns no extra loot. Sensor level never determines reward eligibility or which item is awarded.
 
 - If the nickname has never collected a red cup, its first rewarded check-in supplies and equips one.
-- Later eligible check-ins choose a random unowned accessory. The third rewarded check-in of an evening guarantees a hat if any remain locked. New accessories equip automatically.
+- Later eligible check-ins choose a random unowned hat, hand item or colour. The third rewarded check-in of an evening guarantees a hat if any remain locked. New accessories equip automatically.
 - Hats: party cone, cowboy hat, crown, sunglasses and top hat. Hand items: red cup, pizza slice, floatie and bubble wand. Wardrobe also allows no hat or no hand item.
-- Returning with the same nickname on evenings two, three and four unlocks sunshine, lilac and ocean colours. Rebooting is not a new evening. Up to 32 nickname collections are retained.
+- Sunshine, lilac and ocean colours can be earned through eligible check-ins during the evening. Rebooting keeps collections; starting a new evening clears every nickname collection.
 
 Personalities are stable by nickname. Captain leads parades, Goose plays hat pranks, and Bean is a shy cup buddy; other names get repeatable personalities. Non-sleeping pets periodically gather for a greeting or parade. A borrowed visual hat does not transfer inventory. Friendly encounters accumulate for a pair every two powered minutes when at least two pets are not ASLEEP; DROWSY pets can participate.
 
@@ -90,14 +90,14 @@ Shared rewarded check-ins unlock the jukebox at **2**, pirate ship at **5**, and
 | --- | --- |
 | Back to tank | Return to the shared aquarium |
 | Response settings | Adjust game sensitivity or restore the default; DEMO has separate fake-value zero/span settings |
-| Start new evening | Confirm before clearing the current roster and readings; Keep is the default |
+| Start new evening | Confirm before clearing all evening progress, including clothes and decorations; Keep is the default |
 | MQ-3 setup | Inspect voltage, ADC counts, trend and a temporary diagnostic baseline |
 | Change input mode | Switch LIVE / DEMO for this boot |
 | Evening awards | NEXT cycles Best Dressed, Most Naps and Social Butterfly; OK returns |
 | Tank upgrades | NEXT browses the three shared decorations; OK returns |
 
-Best Dressed counts all owned cosmetics, including those collected on previous evenings. Most Naps and Social Butterfly use this evening's naps and friendly encounters. Ties are identified. Awards update during play; view them before starting a new evening. There is no automatic awards archive.
+Best Dressed counts cosmetics collected during this evening. Most Naps and Social Butterfly use this evening's naps and friendly encounters. Ties are identified. Awards update during play; view them before starting a new evening. There is no automatic awards archive.
 
 ## What gets saved
 
-Pets, their individual histories, sensitivity settings, collected/equipped items, current party stats and shared upgrades survive restart. A new evening clears active pets, their readings and evening stats but retains nickname collections and shared decorations. Removing power does not simulate time passing. The LIVE/DEMO choice and temporary bench zero are not retained across reboot.
+Pets, their individual histories, sensitivity settings, collected/equipped items, current party stats and shared upgrades survive restart. A new evening clears all active pets, readings, nickname collections (including equipped clothes and colours), evening stats, reward timers, shared progress and decorations. Returning nicknames start fresh. Device sensitivity settings are retained. Removing power does not simulate time passing. The LIVE/DEMO choice and temporary bench zero are not retained across reboot.

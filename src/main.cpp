@@ -84,6 +84,8 @@ uint32_t cooldown(int slot) {
 void newNight() {
   storage.newNight(); fun.sync(storage.data); selected=-1; joiningSlot=-1;
   memset(fed,0,sizeof(fed)); memset(rested,0,sizeof(rested));
+  memset(fedAt,0,sizeof(fedAt)); memset(restedAt,0,sizeof(restedAt));
+  lastRaw=0; resultDelta=0; catches=0; historyPage=0;
   lastTick=millis(); show(TANK);
 }
 bool capture(int raw) {
@@ -254,7 +256,7 @@ void status(bool waitForSpace) {
     delay(1);
   }
   char record[2048];
-  size_t length=snprintf(record,sizeof(record),"{\"app\":\"breath-pet\",\"version\":7,\"sensor\":\"%s\",\"page\":\"%s\",\"cursor\":%d,\"selected\":%d,\"players\":%d,\"night\":%lu,\"boot\":%lu,\"zero\":%u,\"span\":%u,\"display\":%s,\"psram\":%u,\"frames\":%lu,\"uptime_ms\":%lu,\"touch\":\"%s\",\"touch_taps\":%lu,\"care_presses\":%lu,\"sample_presses\":%lu,\"storage_ok\":%s,\"demo_raw\":%d,\"picker_name\":\"%s\",\"picker_pet\":%d,\"cooldown_ms\":%lu",
+  size_t length=snprintf(record,sizeof(record),"{\"app\":\"breath-pet\",\"version\":8,\"sensor\":\"%s\",\"page\":\"%s\",\"cursor\":%d,\"selected\":%d,\"players\":%d,\"night\":%lu,\"boot\":%lu,\"zero\":%u,\"span\":%u,\"display\":%s,\"psram\":%u,\"frames\":%lu,\"uptime_ms\":%lu,\"touch\":\"%s\",\"touch_taps\":%lu,\"care_presses\":%lu,\"sample_presses\":%lu,\"storage_ok\":%s,\"demo_raw\":%d,\"picker_name\":\"%s\",\"picker_pet\":%d,\"cooldown_ms\":%lu",
     inputLive?"MQ3":"SIMULATED",PAGE_NAMES[page],cursor,selected,storage.count(),(unsigned long)storage.data.night,
     (unsigned long)storage.data.boot,storage.data.zero,storage.data.span,displayReady?"true":"false",
     ESP.getPsramSize(),(unsigned long)frames,(unsigned long)millis(),touchName,(unsigned long)touchTaps,
@@ -349,6 +351,20 @@ void selfTest() {
   scratch.record(second,23,2000,1,100,400);
   const Sample &measured=scratch.data.players[second].readings[0];
   ok &= measured.source==1 && measured.score==23 && measured.baselineMv==100 && measured.peakMv==400 && measured.spanMv==1200;
+  static FunStorage wardrobe;
+  static const FunData freshFun;
+  wardrobe.data=freshFun; wardrobe.sync(scratch.data);
+  wardrobe.wake(first,0,1000,0); // First check-in: cup.
+  wardrobe.data.minutes+=10;
+  wardrobe.wake(first,0,2000,8); // Five hats + three other items precede colours.
+  auto *outfit=wardrobe.collection("CAPTAIN",false);
+  ok &= outfit && outfit->colours==3 && outfit->colour==1 && wardrobe.lastLoot==21;
+  wardrobe.sync(scratch.data); // Same evening, as on reboot: preserve rewards.
+  ok &= wardrobe.data.totalRewards==2 && wardrobe.collection("CAPTAIN",false)->colours==3;
+  scratch.newNight(); wardrobe.sync(scratch.data);
+  ok &= wardrobe.data.minutes==0 && wardrobe.data.totalRewards==0 && !wardrobe.data.upgrades;
+  ok &= !wardrobe.collection("CAPTAIN",false) && !wardrobe.collection("GOOSE",false);
+  ok &= !wardrobe.celebrating && !wardrobe.lastLoot && !wardrobe.wakeAt[first];
   Serial.printf("SELFTEST %s game rules, stat bounds, calibration, sensor baseline guards, saved schema, framebuffer, PSRAM\n",ok?"PASS":"FAIL");
 }
 

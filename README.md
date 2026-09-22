@@ -28,9 +28,9 @@ The left rail corresponds to the physical buttons. Every selectable page uses th
 
 - **CHILL, PARTY and WILD** change swimming and expressions. High readings cause no damage.
 - After **10 powered minutes** without feeding or a completed game, pets become DROWSY; after **20**, they fall ASLEEP. Any completed sample, even level zero, or a three-catch game wakes them. There is one energy meter.
-- Check in to find red cups, hats and other accessories, with at most one rewarded check-in per pet per ten powered minutes. Returning nicknames retain their collections.
+- Check in to find red cups, hats and other accessories, with at most one rewarded check-in per pet per ten powered minutes. Clothes and colours are collected during the current evening.
 - Everyone contributes to a jukebox, pirate ship and disco ball. View Best Dressed, Most Naps and Social Butterfly in Evening awards.
-- **Start new evening** asks for confirmation, then clears the roster and readings. Clothes and shared decorations remain.
+- **Start new evening** asks for confirmation, then clears pets, readings, clothes, colours, awards progress and shared decorations. Sensor settings stay saved.
 
 See the [gameplay guide](docs/GAMEPLAY.md) for reactions, rewards, persistence and all menu options, or browse the [current screen gallery](docs/screenshots/README.md).
 

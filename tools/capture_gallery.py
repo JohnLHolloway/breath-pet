@@ -247,9 +247,9 @@ def capture(device, destination):
     menu_action(5)
     shot('awards', 'awards', 'Evening awards summarize clothing, naps and friendly encounters.')
     menu_action(6)
-    shot('tank-upgrades', 'decor', 'Shared decorations remain unlocked across evenings.')
+    shot('tank-upgrades', 'decor', 'Shared decorations last for this evening and reset with a new one.')
     menu_action(2)
-    shot('new-evening', 'new_night', 'Keep this evening is the default before clearing pets and readings.')
+    shot('new-evening', 'new_night', 'Keep is the default; resetting clears pets, readings, clothes and decorations.')
     write_json(destination / 'manifest.json', manifest)
     return manifest
 

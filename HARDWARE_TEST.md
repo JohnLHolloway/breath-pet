@@ -41,7 +41,7 @@ These are **rendered framebuffer exports**, not photos or physical panel readbac
 
 The current save layout stores party/history data and collection/progress data separately. An earlier low-space condition in the 20 KB NVS partition was fixed by removing only obsolete `party-v1` after a valid `party-v2` record is loaded. Existing v2 pets/history were preserved; no full NVS erase was performed. Save health, restart behavior and collection persistence passed subsequent checks.
 
-The gallery utility compares normal saved fields and exact histories before and after flashing its fixture, without copying private readings into public documentation. Up to 32 nickname collections and shared upgrades survive starting a new evening; the active roster and its history do not.
+The gallery utility compares normal saved fields and exact histories before and after flashing its fixture, without copying private readings into public documentation. A confirmed new evening clears all nickname collections, equipped items, shared upgrades and their progress, as well as the roster and history. Normal restarts retain them; device sensitivity settings survive an evening reset.
 
 ## Physical limits and next checks
 

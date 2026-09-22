@@ -208,7 +208,7 @@ void drawResult(uint32_t now) {
   text(fun.state(selected),157,66,MINT,2);
   const Sample &r=p.readings[0];
   char detail[40]; snprintf(detail,sizeof(detail),"%s score: %u",r.source?"Game":"Demo",p.lastScore); text(detail,157,92,MUTED,1);
-  if(fun.lastLoot) snprintf(detail,sizeof(detail),"NEW: %s",fun.lastLoot<10?HAT_NAMES[fun.lastLoot]:ITEM_NAMES[fun.lastLoot-10]);
+  if(fun.lastLoot) snprintf(detail,sizeof(detail),"NEW: %s",fun.lastLoot<10?HAT_NAMES[fun.lastLoot]:fun.lastLoot<20?ITEM_NAMES[fun.lastLoot-10]:COLOUR_NAMES[fun.lastLoot-20]);
   else snprintf(detail,sizeof(detail),"Awake + happy again");
   text(detail,157,108,resultDelta<0?GOLD:MINT,1);
   center("Game reaction / not a BAC reading",184,128,MUTED,1);
@@ -328,8 +328,9 @@ void draw(uint32_t now) {
     case AWARDS: drawAwards(now); break;
     case DECOR: drawDecor(); break;
     case NEW_NIGHT:
-      header("NEW EVENING?"); center("Clear tonight's pets & history?",184,61,INK,2);
-      center("Clothes & tank toys stay saved",184,88,MUTED,1);
+      header("NEW EVENING?"); center("Reset all evening progress?",184,58,INK,2);
+      center("Pets, readings, clothes & tank toys",184,84,MUTED,1);
+      center("Everything starts fresh",184,105,GOLD,1);
       action(cursor==0?"Keep my pets":"Clear & start again",cursor,2); break;
   }
   if (notice[0] && now-noticeAt<2500) {

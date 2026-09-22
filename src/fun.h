@@ -39,7 +39,14 @@ public:
   }
   void sync(const PartyData &party) {
     bool changed=false;
-    if(data.night!=party.night) { data.night=party.night; for(auto &p:data.pets) p=FunPet(); celebrating=false; changed=true; }
+    if(data.night!=party.night) {
+      // The party's saved evening ID also completes a reset after power loss
+      // between the party and collection writes. A normal reboot keeps both.
+      static const FunData fresh;
+      data=fresh; data.night=party.night;
+      memset(wakeAt,0,sizeof(wakeAt)); discoAt=0; lastLoot=0; celebrating=false;
+      changed=true;
+    }
     for(int i=0;i<MAX_PLAYERS;i++) {
       const auto &p=party.players[i]; if(!p.active) continue;
       FunPet &f=data.pets[i];
@@ -52,7 +59,7 @@ public:
         if(!strcmp(p.name,"BEAN")) f.personality=2;
         if(!strcmp(p.name,"CAPTAIN")) f.personality=3;
         Collection *c=collection(p.name);
-        if(c && c->lastNight!=party.night) { c->lastNight=party.night; c->visits=min(65535,int(c->visits)+1); if(c->visits>=2) c->colours|=2; if(c->visits>=3) c->colours|=4; if(c->visits>=4) c->colours|=8; }
+        if(c && c->lastNight!=party.night) { c->lastNight=party.night; c->visits=1; }
         changed=true;
       }
     }
@@ -79,11 +86,20 @@ public:
       if(c) {
         if(!(c->items&2)) { c->items|=2; c->item=1; lastLoot=11; }
         else {
-          int options[9],n=0;
+          int options[12],n=0;
           for(int i=1;i<HATS;i++) if(!(c->hats&(1<<i))) options[n++]=i;
           // Third check-in guarantees a hat if any remain.
-          if(p.checkins!=3 || !n) for(int i=1;i<ITEMS;i++) if(!(c->items&(1<<i))) options[n++]=10+i;
-          if(n) { lastLoot=options[randomBits%n]; if(lastLoot<10) { c->hats|=1<<lastLoot; c->hat=lastLoot; } else { c->items|=1<<(lastLoot-10); c->item=lastLoot-10; } }
+          if(p.checkins!=3 || !n) {
+            for(int i=1;i<ITEMS;i++) if(!(c->items&(1<<i))) options[n++]=10+i;
+            // Colours must be earnable within this evening, like other clothes.
+            for(int i=1;i<COLOURS;i++) if(!(c->colours&(1<<i))) options[n++]=20+i;
+          }
+          if(n) {
+            lastLoot=options[randomBits%n];
+            if(lastLoot<10) { c->hats|=1<<lastLoot; c->hat=lastLoot; }
+            else if(lastLoot<20) { c->items|=1<<(lastLoot-10); c->item=lastLoot-10; }
+            else { c->colours|=1<<(lastLoot-20); c->colour=lastLoot-20; }
+          }
         }
       }
       if(data.totalRewards>=2) data.upgrades|=1;

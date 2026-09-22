@@ -62,7 +62,7 @@ This builds/flashes `device-test`, runs `tools/test_device.py --reset-demo-data`
 | Roster, histories, calibration | `breath-pet` | `breath-test` |
 | Nickname collections, party progress | `pet-fun` | `fun-test` |
 
-The runner refuses its reset unless the device reports `test_mode: true`. `-ResetDemoData` on the PowerShell helper is retained for compatibility but is not required. The latest device suite has **99 checks**, covering navigation, capacity, owner isolation, persistence, rolling baseline/recovery, five-plus-ten-second capture, rejection/cancellation, sleep, game wins/misses, loot timing, wardrobe, awards and returning collections. `selftest` adds firmware-side rule, migration and ring-buffer checks. See [hardware verification](../HARDWARE_TEST.md) for the scope and limits of the result. The full private run report goes to ignored `test-results.json`.
+The runner refuses its reset unless the device reports `test_mode: true`. `-ResetDemoData` on the PowerShell helper is retained for compatibility but is not required. The latest device suite has **105 checks**, covering navigation, capacity, owner isolation, persistence, rolling baseline/recovery, five-plus-ten-second capture, rejection/cancellation, sleep, game wins/misses, loot timing, wardrobe, awards, colour rewards and complete evening resets (including restart persistence). `selftest` adds firmware-side rule, migration and ring-buffer checks. See [hardware verification](../HARDWARE_TEST.md) for the scope and limits of the result. The full private run report goes to ignored `test-results.json`.
 
 Test firmware alone accepts ADC injection, accelerated game time and a fixed bubble position. Advancing game minutes does **not** skip real-time feed or nap button cooldowns. These commands are absent from normal builds:
 
@@ -141,6 +141,6 @@ LIVE baseline capture is automatic. `sensor zero` does not alter gameplay sensit
 | `tools/test_device.py` | Device integration suite |
 | `tools/capture_screen.py`, `tools/capture_gallery.py` | Single frame and isolated gallery capture |
 
-Current party state uses the versioned `party-v2` record; collections/progress use a separate `fun-v1` record. Startup removes an obsolete `party-v1` key **only after validating the v2 record**, reclaiming space in the 20 KB NVS partition. Do not erase or format NVS as routine troubleshooting. Normal and test namespaces must remain separate. `storage_ok` and `fun_storage_ok` in status report save health.
+Current party state uses the versioned `party-v2` record; collections/progress use a separate `fun-v1` record. Startup removes an obsolete `party-v1` key **only after validating the v2 record**, reclaiming space in the 20 KB NVS partition. Do not erase or format NVS as routine troubleshooting. A changed party evening ID resets the entire fun record, including all nickname collections and shared progress. This also completes the reset on startup if power was lost between the two saves. Matching IDs preserve progress on reboot. Normal and test namespaces must remain separate. `storage_ok` and `fun_storage_ok` in status report save health.
 
 Keep `.env`, flash dumps, local logs, private snapshots and real player readings out of commits. Documentation screenshots must use fictional isolated fixtures.

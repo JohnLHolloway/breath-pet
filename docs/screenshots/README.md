@@ -54,6 +54,6 @@ The [capture manifest](manifest.json) records the source revision, firmware hash
 | --- | --- |
 | ![Bench diagnostics retain millivolts and a trace; this fixture injects 100 mV.](mq3-setup.png) | ![Evening awards summarize clothing, naps and friendly encounters.](awards.png) |
 
-| Shared decorations remain unlocked across evenings. | Keep this evening is the default before clearing pets and readings. |
+| Shared decorations last for this evening and reset with a new one. | Keep is the default; resetting clears pets, readings, clothes and decorations. |
 | --- | --- |
-| ![Shared decorations remain unlocked across evenings.](tank-upgrades.png) | ![Keep this evening is the default before clearing pets and readings.](new-evening.png) |
+| ![Shared decorations last for this evening and reset with a new one.](tank-upgrades.png) | ![Keep is the default; resetting clears pets, readings, clothes and decorations.](new-evening.png) |

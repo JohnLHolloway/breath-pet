@@ -190,7 +190,7 @@ try:
         check('Wardrobe opens from pet menu',s['page']=='wardrobe')
         original_hat=s['hat']; s=cmd('ui select'); check('Wardrobe cycles only unlocked hats',s['hat']!=original_hat and s['hats']&(1<<s['hat']))
         cmd('ui next'); s=cmd('ui select'); check('Hand item can be changed independently',s['items']&(1<<s['item']))
-        closet={k:s[k] for k in ('hats','items','hat','item','games','checkins','naps')}
+        closet={k:s[k] for k in ('hats','items','colours','hat','item','colour','games','checkins','naps','upgrades')}
         cmd('ui menu')
         for _ in range(5): cmd('ui next')
         s=cmd('ui select'); check('Evening awards are reachable',s['page']=='awards')
@@ -200,9 +200,22 @@ try:
         s=cmd('ui select'); check('Shared tank upgrades are reachable',s['page']=='decor')
         cmd('reboot','REBOOT'); device.close(); time.sleep(2); device.open(); drain(2)
         s=cmd('select 0'); check('Clothes and party progress survive restart',all(s[k]==v for k,v in closet.items()) and s['fun_storage_ok'])
-        cmd('night new CONFIRM'); s=cmd('join CAPTAIN 1')
-        check('Returning nickname keeps collection and gains a colour',s['hats']==closet['hats'] and s['items']==closet['items'] and s['visits']==2 and s['colours']&2)
-        check('New evening resets check-ins and naps but keeps upgrades',s['checkins']==0 and s['naps']==0 and s['upgrades']>0 and s['history_count']==0)
+        cmd('ui menu'); cmd('ui next'); cmd('ui next'); cmd('ui select')
+        s=cmd('ui select')
+        check('Keep evening preserves earned clothes and decorations',all(s[k]==v for k,v in closet.items()))
+        settings={k:s[k] for k in ('zero','span','sensor_span_mv')}
+        cmd('ui next'); cmd('ui next'); cmd('ui select'); cmd('ui next'); s=cmd('ui select')
+        check('Confirmed UI reset clears all pets and tank decorations',s['players']==0 and s['upgrades']==0 and s['page']=='tank' and s['cursor']==6)
+        check('Evening reset preserves device sensitivity',all(s[k]==v for k,v in settings.items()))
+        cmd('reboot','REBOOT'); device.close(); time.sleep(2); device.open(); drain(2)
+        s=cmd('status'); check('Empty evening and locked decorations survive reboot',s['players']==0 and s['upgrades']==0 and s['fun_storage_ok'] and s['storage_ok'])
+        s=cmd('join CAPTAIN 1')
+        check('Returning nickname starts with an empty wardrobe',all(s[k]==1 for k in ('hats','items','colours','visits')) and all(s[k]==0 for k in ('hat','item','colour')))
+        check('New evening clears all personal progress and readings',all(s[k]==0 for k in ('checkins','naps','games','encounters','history_count','feeds','idle_minutes')) and s['reward_ready'])
+        s=cmd('sample 0')
+        check('Fresh first reward gives a cup without old shared progress',s['items']==3 and s['item']==1 and s['checkins']==1 and s['upgrades']==0)
+        s=cmd('join GOOSE 2')
+        check('Reset also clears other nickname collections',all(s[k]==1 for k in ('hats','items','colours','visits')) and all(s[k]==0 for k in ('hat','item','colour','history_count')))
         cmd('ui menu')
         if not args.keep_demo_roster:
             cmd('ui select') # Back to tank (menu reset cursor is zero).
