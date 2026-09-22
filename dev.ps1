@@ -18,8 +18,16 @@ try {
         'upload' { & $runtime -m platformio run --target upload --upload-port $Port }
         'monitor' { & $runtime -m platformio device monitor --port $Port --baud 115200 }
         'test' {
-            if (-not $ResetDemoData) { throw 'Tests replace saved demo data. Use -ResetDemoData to run them.' }
-            & $runtime tools\test_device.py --port $Port --reset-demo-data
+            # Tests use their own NVS namespace. Always restore the normal firmware.
+            try {
+                & $runtime -m platformio run -e device-test --target upload --upload-port $Port
+                if ($LASTEXITCODE -ne 0) { throw 'Test firmware upload failed' }
+                & $runtime tools\test_device.py --port $Port --reset-demo-data
+                if ($LASTEXITCODE -ne 0) { throw 'Device tests failed' }
+            } finally {
+                & $runtime -m platformio run -e breath-pet --target upload --upload-port $Port
+                if ($LASTEXITCODE -ne 0) { throw 'Restore normal firmware failed; retry dev.ps1 upload' }
+            }
         }
     }
     if ($LASTEXITCODE -ne 0) { throw "Command failed with exit code $LASTEXITCODE" }

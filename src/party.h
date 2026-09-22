@@ -2,6 +2,10 @@
 #include <Arduino.h>
 #include <Preferences.h>
 
+#ifndef BREATH_PET_TEST_MODE
+#define BREATH_PET_TEST_MODE 0
+#endif
+
 constexpr int MAX_PLAYERS=6, HISTORY_SIZE=16, PET_TYPES=6;
 constexpr uint32_t FEED_COOLDOWN_MS=5000;
 const char *const PET_NAMES[]={"BLOB","AXOLOTL","BAT","CAT","GHOST","FROG"};
@@ -62,7 +66,7 @@ public:
     return true;
   }
   bool begin() {
-    ready=prefs.begin("breath-pet",false); if (!ready) return false;
+    ready=prefs.begin(BREATH_PET_TEST_MODE?"breath-test":"breath-pet",false); if (!ready) return false;
     PartyData loaded;
     // A separate versioned key preserves the solo prototype data without mixing owners.
     if (prefs.getBytesLength("party-v1")==sizeof(loaded) &&

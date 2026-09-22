@@ -26,10 +26,12 @@ The roster, species, care stats, calibration and each person's history survive r
 
 | Button | Tap | Hold for 1.2 seconds |
 | --- | --- | --- |
-| **GPIO14** (non-BOOT front button) | Next option, nickname, pet or demo value | Open evening menu |
-| **BOOT / GPIO0** | Select, adopt or start | Back / cancel |
+| **Upper / BOOT / GPIO0** | NEXT: cycle option, nickname, pet or demo value | Back / cancel |
+| **Lower / GPIO14** | OK: choose the highlighted action | Open evening menu |
 
-The bottom of each screen shows the relevant controls. In the tank, selection cycles through existing pets, Add Pet and Menu. Six is the capacity, not the starting population. A golden ring marks the selected swimming pet. BOOT during power-up still enters firmware download mode.
+Hold the device landscape with USB and the two front buttons on the **left**, like the product photo. A fixed left rail labels each physical button; pressing it lights its label. The large gold bar shows exactly what OK will do. Small dots show your position in a set of choices. NEXT consistently cycles without confirming; OK confirms. On History, NEXT advances the page. A golden ring identifies the selected swimming pet. BOOT during power-up still enters firmware download mode.
+
+In the tank, NEXT cycles through existing pets, Add Pet and Menu. Six is the capacity, not the starting population. Hold the upper button to go back or cancel a sample; hold the lower button for the evening menu.
 
 Touch uses the same flows when a supported controller responds. Firmware probes CST816-family (0x15) and CST328 (0x1A) on SDA18/SCL17, reset21 and interrupt16. **The currently tested board does not respond to either address or the full I2C scan, and the user reports that touch does not work.** Everything is operable with buttons. Screen rendering does not prove touch hardware is present; LILYGO sells both variants.
 
@@ -75,11 +77,13 @@ The build pins `espressif32@6.5.0` / Arduino-ESP32 2.0.14, following LILYGO's wo
 ## Tests and diagnostics
 
 ```powershell
-# Replaces the current evening, tests fake pets and samples, then leaves an empty tank.
-.\dev.ps1 test -Port COM3 -ResetDemoData
+# Temporarily flashes a test build with separate saved data, then restores normal firmware.
+.\dev.ps1 test -Port COM3
 ```
 
-The device test drives the same handlers as the physical buttons. It checks adoption, taken-name skipping, six-player capacity, timed feeding, cooldowns, owner isolation, overload/recovery, input validation, persistent stats/history and calibration, animation, and new-evening confirmation. A separate on-device test exercises stat bounds and per-person history rollover. Test output is saved to ignored `test-results.json`.
+Tests use the separate `breath-test` NVS namespace; your normal pets in `breath-pet` are preserved. The script refuses to reset data unless the test firmware reports `test_mode: true`. The helper restores the normal firmware even when tests fail (leave USB connected). `-ResetDemoData` remains accepted for older scripts but is no longer required.
+
+The device test drives the same navigation handlers as the physical buttons. It checks adoption, taken-name skipping, six-player capacity, timed feeding, cooldowns, owner isolation, overload/recovery, input validation, persistent stats/history and calibration, animation, and new-evening confirmation. A separate on-device test exercises stat bounds and per-person history rollover. Test output is saved to ignored `test-results.json`.
 
 Newline-terminated serial commands at 115200 baud:
 

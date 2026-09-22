@@ -11,7 +11,7 @@ p.add_argument('--port',default='COM3')
 p.add_argument('--reset-demo-data',action='store_true')
 p.add_argument('--keep-demo-roster',action='store_true')
 args=p.parse_args()
-if not args.reset_demo_data: p.error('--reset-demo-data is required: this replaces the current evening')
+if not args.reset_demo_data: p.error('--reset-demo-data is required: this replaces the isolated test evening')
 report={'timestamp':datetime.now(timezone.utc).isoformat(),'checks':[]}
 
 def check(name,condition):
@@ -30,13 +30,23 @@ try:
             device.write((text+'\n').encode()); device.flush()
             end=time.monotonic()+5
             acknowledged=False
+            pending=b''
             while time.monotonic()<end:
-                line=device.readline().decode(errors='replace').strip()
+                pending+=device.readline()
+                # A USB read timeout can return part of a line; wait for its newline.
+                if not pending.endswith(b'\n'): continue
+                line=pending.decode(errors='replace').strip()
+                pending=b''
                 if line=='CMD': acknowledged=True
-                elif acknowledged and line.startswith(marker): return json.loads(line) if marker=='{' else line
+                elif acknowledged and line.startswith(marker):
+                    try: return json.loads(line) if marker=='{' else line
+                    except json.JSONDecodeError:
+                        report['invalid_reply']={'command':text,'line':line}
+                        raise
             raise TimeoutError(text)
 
         drain(2)
+        check('Isolated test storage enabled',cmd('status').get('test_mode') is True)
         cmd('night new CONFIRM'); cmd('cal default')
         s=cmd('status')
         check('Empty tank starts with Add Pet selected',s['players']==0 and s['page']=='tank' and s['selected']==-1 and s['cursor']==6)
@@ -53,6 +63,11 @@ try:
         check('Timed sample is captured once with capped benefit',s['page']=='result' and s['food']==85 and s['joy']==82 and s['health']==100 and s['feeds']==1)
         check('Repeated feeding is rejected during cooldown',cmd('sample 85','ERROR').startswith('ERROR'))
         s=cmd('status'); check('Rejected feed changes no state',s['feeds']==1 and s['health']==100)
+        s=cmd('ui next'); check('Result cycles action without leaving screen',s['page']=='result' and s['cursor']==1)
+        s=cmd('ui select'); check('Result confirms Visit your pet',s['page']=='pet')
+        cmd('ui next'); s=cmd('ui select'); check('Highlighted history action opens history',s['page']=='history')
+        s=cmd('ui next'); check('Single history page wraps safely',s['page']=='history')
+        s=cmd('ui select'); check('History confirms return to pet',s['page']=='pet')
         s=cmd('history'); check('History records correct owner and score',s['owner']=='CAPTAIN' and len(s['history'])==1 and s['history'][0]['score']==25)
         captain_history=s['history']
         cmd('tank'); cmd('ui next'); s=cmd('ui select')

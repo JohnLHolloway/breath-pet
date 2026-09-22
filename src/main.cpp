@@ -112,8 +112,8 @@ void next() {
     case PET_PICK: petIndex=(petIndex+1)%PET_TYPES; break;
     case PET: cursor=(cursor+1)%3; break;
     case FEED: demoIndex=(demoIndex+1)%4; break;
-    case RESULT: show(PET); break;
-    case HISTORY: historyPage=(historyPage+1)%max(1,(int(player().count)+3)/4); break;
+    case RESULT: cursor=1-cursor; break;
+    case HISTORY: historyPage=(historyPage+1)%max(1,(int(player().count)+2)/3); break;
     case MENU: cursor=(cursor+1)%3; break;
     case CALIBRATION: cursor=(cursor+1)%4; break;
     case NEW_NIGHT: cursor=1-cursor; break;
@@ -136,7 +136,7 @@ void activate() {
       else restPet();
       break;
     case FEED: beginFeed(); break;
-    case RESULT: show(TANK); break;
+    case RESULT: show(cursor==0?TANK:PET); break;
     case HISTORY: show(PET); break;
     case MENU:
       if (cursor==0) show(TANK); else if (cursor==1) show(CALIBRATION); else show(NEW_NIGHT);
@@ -148,16 +148,16 @@ void activate() {
 }
 
 void swimPosition(int slot,uint32_t now,int &x,int &y) {
-  float phase=fmodf(now/70.0f+slot*89.0f,528.0f);
-  x=28+int(phase<=264?phase:528-phase);
-  y=66+(slot%2)*48+int(sinf(now/1300.0f+slot*1.8f)*9);
+  float phase=fmodf(now/70.0f+slot*71.0f,408.0f);
+  x=82+int(phase<=204?phase:408-phase);
+  y=65+(slot%2)*47+int(sinf(now/1300.0f+slot*1.8f)*7);
 }
 void tap(int x,int y) {
   if (x<0 || x>=320 || y<0 || y>=170) return;
-  if (page==TANK) {
-    if (x>=276 && y<30) show(MENU);
-    else if (x>=194 && y<30) addPet();
-    else if (y>=35 && y<146) {
+  if (x<47) { if (y<85) next(); else activate(); }
+  else if (y>=139) activate();
+  else if (page==TANK) {
+    if (y>=32 && y<139) {
       int closest=-1,distance=1600;
       for (int i=0;i<MAX_PLAYERS;i++) if (storage.data.players[i].active) {
         int px,py; swimPosition(i,millis(),px,py); int d=(x-px)*(x-px)+(y-py)*(y-py);
@@ -165,12 +165,8 @@ void tap(int x,int y) {
       }
       if (closest>=0) selectSlot(closest);
     }
-  } else if (page==PET && y>=112 && y<146) { cursor=min(2,x/107); activate(); }
-  else if (page==MENU && y>=38 && y<140) { cursor=min(2,(y-38)/34); activate(); }
-  else if (page==CALIBRATION && y>=75 && y<145) { cursor=(y>=110?2:0)+(x>=160?1:0); activate(); }
-  else if (page==NEW_NIGHT && y>=100 && y<145) { cursor=x>=160?1:0; activate(); }
-  else if (y>=148) back();
-  else if (page!=SAMPLING) { if (x<160) next(); else activate(); }
+  } else if (page==MENU && y>=39 && y<129) { cursor=min(2,(y-39)/30); activate(); }
+  else if (page!=SAMPLING) next();
   status();
 }
 
@@ -178,16 +174,18 @@ void tap(int x,int y) {
 
 void status() {
   if (Serial.availableForWrite()<2048) return;
-  Serial.printf("{\"app\":\"breath-pet\",\"version\":3,\"sensor\":\"SIMULATED\",\"page\":\"%s\",\"cursor\":%d,\"selected\":%d,\"players\":%d,\"night\":%lu,\"boot\":%lu,\"zero\":%u,\"span\":%u,\"display\":%s,\"psram\":%u,\"frames\":%lu,\"uptime_ms\":%lu,\"touch\":\"%s\",\"touch_taps\":%lu,\"care_presses\":%lu,\"sample_presses\":%lu,\"storage_ok\":%s,\"demo_raw\":%d,\"picker_name\":\"%s\",\"picker_pet\":%d,\"cooldown_ms\":%lu",
+  char record[1536];
+  size_t length=snprintf(record,sizeof(record),"{\"app\":\"breath-pet\",\"version\":3,\"sensor\":\"SIMULATED\",\"page\":\"%s\",\"cursor\":%d,\"selected\":%d,\"players\":%d,\"night\":%lu,\"boot\":%lu,\"zero\":%u,\"span\":%u,\"display\":%s,\"psram\":%u,\"frames\":%lu,\"uptime_ms\":%lu,\"touch\":\"%s\",\"touch_taps\":%lu,\"care_presses\":%lu,\"sample_presses\":%lu,\"storage_ok\":%s,\"demo_raw\":%d,\"picker_name\":\"%s\",\"picker_pet\":%d,\"cooldown_ms\":%lu",
     PAGE_NAMES[page],cursor,selected,storage.count(),(unsigned long)storage.data.night,
     (unsigned long)storage.data.boot,storage.data.zero,storage.data.span,displayReady?"true":"false",
     ESP.getPsramSize(),(unsigned long)frames,(unsigned long)millis(),touchName,(unsigned long)touchTaps,
     (unsigned long)carePresses,(unsigned long)samplePresses,storage.lastWriteOK?"true":"false",
     DEMO_VALUES[demoIndex],PICKER_NAMES[nameIndex],petIndex,(unsigned long)(hasPlayer()?cooldown(selected):0));
-  if (hasPlayer()) Serial.printf(",\"name\":\"%s\",\"pet_type\":%u,\"health\":%u,\"food\":%u,\"joy\":%u,\"score\":%u,\"feeds\":%lu,\"history_count\":%u,\"mood\":\"%s\"",
+  if (hasPlayer()) length+=snprintf(record+length,sizeof(record)-length,",\"name\":\"%s\",\"pet_type\":%u,\"health\":%u,\"food\":%u,\"joy\":%u,\"score\":%u,\"feeds\":%lu,\"history_count\":%u,\"mood\":\"%s\"",
     player().name,player().type,player().health,player().food,player().joy,player().lastScore,
     (unsigned long)player().feeds,player().count,mood(player()));
-  Serial.println("}");
+  length+=snprintf(record+length,sizeof(record)-length,",\"test_mode\":%s}\n",BREATH_PET_TEST_MODE?"true":"false");
+  Serial.write(reinterpret_cast<const uint8_t *>(record),length);
 }
 void historyStatus() {
   if (!hasPlayer()) { Serial.println("ERROR select a pet first"); return; }
@@ -228,14 +226,14 @@ void screenshot() {
   uint32_t progress=millis();
   for (size_t offset=0;offset<320*170*2;) {
     size_t count=min(size_t(256),size_t(320*170*2)-offset);
-    while (Serial.availableForWrite()<int(count)) { if (millis()-progress>3000) { Serial.setTxTimeoutMs(0); return; } delay(1); }
+    while (Serial.availableForWrite()<int(count)) { if (millis()-progress>3000) { Serial.setTxTimeoutMs(10); return; } delay(1); }
     size_t sent=Serial.write(pixels+offset,count);
     offset+=sent;
     if (sent) progress=millis();
-    else if (millis()-progress>3000) { Serial.setTxTimeoutMs(0); return; }
+    else if (millis()-progress>3000) { Serial.setTxTimeoutMs(10); return; }
   }
   Serial.println("\nEND_FRAME");
-  Serial.setTxTimeoutMs(0);
+  Serial.setTxTimeoutMs(10);
 }
 bool numberAfter(const String &s,const char *prefix,int &value) {
   if (!s.startsWith(prefix)) return false;
@@ -289,7 +287,7 @@ void command(const String &cmd) {
 void setup() {
   pinMode(POWER_PIN,OUTPUT); digitalWrite(POWER_PIN,HIGH);
   pinMode(0,INPUT_PULLUP); pinMode(14,INPUT_PULLUP);
-  Serial.setTxBufferSize(8192); Serial.setTxTimeoutMs(0); Serial.begin(115200);
+  Serial.setTxBufferSize(8192); Serial.setTxTimeoutMs(10); Serial.begin(115200);
   lcd.begin();
   for (const auto &c:panelCommands) {
     lcd.writecommand(c.cmd);
@@ -309,8 +307,8 @@ void loop() {
   uint32_t now=millis();
   int a=careButton.poll(now),b=sampleButton.poll(now);
   pollTouch(now);
-  if (a) { ++carePresses; if (a==2) back(); else activate(); status(); }
-  if (b) { ++samplePresses; if (b==2) show(MENU); else next(); status(); }
+  if (a) { ++carePresses; if (a==2) back(); else next(); status(); }
+  if (b) { ++samplePresses; if (b==2) show(MENU); else activate(); status(); }
   static String input; static bool overflow=false;
   int budget=64;
   while (Serial.available() && budget-->0) {

@@ -10,7 +10,12 @@ p.add_argument('output',type=Path)
 p.add_argument('--port',default='COM3')
 p.add_argument('--command',action='append',default=[])
 args=p.parse_args()
-with serial.Serial(args.port,115200,timeout=2,write_timeout=2) as device:
+device=serial.Serial(None,115200,timeout=2,write_timeout=2)
+device.dtr=False
+device.rts=False
+device.port=args.port
+device.open()
+with device:
     end=time.monotonic()+1
     while time.monotonic()<end: device.readline()
     for command in args.command:
@@ -20,7 +25,8 @@ with serial.Serial(args.port,115200,timeout=2,write_timeout=2) as device:
         while time.monotonic()<end:
             line=device.readline()
             if line.strip()==b'CMD': acknowledged=True
-            elif acknowledged and (line.startswith(b'{') or line.startswith(b'ERROR')): break
+            elif acknowledged and line.startswith(b'ERROR'): raise RuntimeError(line.decode().strip())
+            elif acknowledged and line.startswith(b'{'): break
         else: raise RuntimeError('Command not acknowledged: '+command)
     device.reset_input_buffer(); device.write(b'screen\n')
     end=time.monotonic()+5
