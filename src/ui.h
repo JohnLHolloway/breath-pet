@@ -191,10 +191,10 @@ void drawFeed(uint32_t now) {
     return;
   }
   if(inputLive) {
-    center("KEEP SENSOR IN CLEAN AIR",184,75,GOLD,2);
-    const char *hint=!mq3.count?"Checking sensor...":sensorFeed.ready(mq3)?"Ready / countdown starts with OK":"Let the sensor settle and recover";
-    center(hint,184,104,MUTED,1);
-    action(sensorFeed.ready(mq3)?"Start feeding":"Wait for clean air");
+    const char *state=!mq3.count?"SENSOR SETTLING":(mq3.millivolts<50 || mq3.millivolts>2700)?"CHECK SENSOR":sensorFeed.ready(mq3)?"TAKING A BREATHER":"SENSOR RECOVERING";
+    center(feedPending?state:"TRY ANOTHER SAMPLE",184,75,GOLD,2);
+    center(feedPending?"Countdown starts when ready":"No reading saved / OK to retry",184,104,MUTED,1);
+    action(feedPending?"Cancel feeding":"Try again");
   } else {
     center("PRETEND SAMPLE",184,73,GOLD,2);
     snprintf(value,sizeof(value),"Game level: %d",DEMO_VALUES[demoIndex]); center(value,184,103,MUTED,2);
@@ -245,7 +245,7 @@ void drawSensor(uint32_t now) {
   header("MQ-3 BENCH TEST");
   char value[48]; snprintf(value,sizeof(value),"%d mV",mq3.millivolts); text(value,57,39,MINT,4);
   snprintf(value,sizeof(value),"ADC %d",mq3.raw); text(value,236,43,MUTED,1);
-  snprintf(value,sizeof(value),"%lus open",(unsigned long)((now-mq3.started)/1000)); text(value,236,56,MUTED,1);
+  snprintf(value,sizeof(value),"%lus active",(unsigned long)((now-mq3.started)/1000)); text(value,236,56,MUTED,1);
   if(mq3.hasBaseline) snprintf(value,sizeof(value),"Air %d mV / change %+d mV",mq3.baseline,mq3.millivolts-mq3.baseline);
   else snprintf(value,sizeof(value),"GPIO1 / no air baseline / not BAC");
   text(value,57,72,MUTED,1);

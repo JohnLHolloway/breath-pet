@@ -46,20 +46,20 @@ The monitor shows actual GPIO1 millivolts, raw 12-bit ADC counts, a fixed 0-3100
 
 Leave the sensor in clean air. The first ten seconds fill a 100-sample window. **Zero in clean air** accepts a temporary baseline only when the latest reading is between 50 and 2700 mV and the window spread is at most 50 mV. These are bench-test checks, not a sensor-readiness or accuracy guarantee. A quiet floating input can still look plausible; verify the actual wiring with the meter. Low or high input prompts a wiring check.
 
-Once zeroed, the screen shows change from the window average in millivolts. NEXT cycles through Zero in clean air, Clear air baseline, and Back to menu; OK performs the selected action. Hold the upper button to return. Reopening the monitor or rebooting starts a fresh window and clears the temporary baseline.
+Once zeroed, the screen shows change from the window average in millivolts. NEXT cycles through Zero in clean air, Clear air baseline, and Back to menu; OK performs the selected action. Hold the upper button to return. In live mode, acquisition continues on every screen, so reopening this monitor preserves the rolling window and temporary bench zero. Rebooting clears that temporary zero; in demo mode, reopening the bench monitor starts a fresh window.
 
-No drinking is required to verify power, divider voltage, ADC operation or clean-air drift. Normal breath can change humidity as well as the reading; that is not proof of alcohol detection. We have not yet verified this module's alcohol response.
+No drinking is required to verify power, divider voltage, ADC operation or clean-air drift. Normal breath can change humidity as well as the reading; that is not proof of alcohol detection. Cup-vapor response and recovery have been observed, as described below.
 
 Brand-new sensors need conditioning before repeatable comparisons. The Winsen MQ-3 manual specifies more than 48 hours of preheat under its standard test conditions. The exact sensor on this reseller module is unverified, so use its own datasheet when available. A quiet ten-second trace is not a substitute for conditioning. [Winsen MQ-3 manual](https://cdn.sparkfun.com/datasheets/Sensors/Biometric/MQ-3%20ver1.3%20-%20Manual.pdf)
 
 ## Live feeding is enabled
 
-Normal firmware boots into real MQ-3 feeding. Select a pet, choose Feed your pet, and leave the sensor in clean air until Start live feed appears. Press OK before bringing the cup near the sensor. Keep it dry; remove the cup after 5–10 seconds. The firmware records a 10-second peak response and shows a game score, never BAC.
+Normal firmware boots into real MQ-3 feeding. Select a pet and choose Wake / feed. When the background signal is ready, the five-second countdown starts immediately. If needed, a recovery screen waits automatically; OK or Back cancels it. Bring the cup near the sensor only when BLOW appears. Keep it dry; remove the cup after 5–10 seconds. The firmware records a 10-second peak response and shows a game score, never BAC.
 
-Each feed uses a new quiet 100-sample baseline. The next player waits for a full quiet window in the provisional 50–250 mV clean-air band. Cancelling or detecting invalid input creates no reading. See [README.md](README.md) for exact thresholds and the gentler 1200 mV game scale and 400 mV response threshold. A zero-rise clean-air sample feeds the pet too.
+Each feed freezes the latest quiet 100-sample rolling average, tracked in the background throughout live mode. The next player waits for a full quiet window in the provisional 50–250 mV clean-air band. Cancelling or detecting invalid input creates no reading. See [README.md](README.md) for exact thresholds and the gentler 1200 mV game scale and 400 mV response threshold. A zero-rise clean-air sample feeds the pet too.
 
 Live history is tagged MQ3 and stores baseline mV, peak mV and the scale at capture. Existing fake readings stay labeled DEMO. Menu → Change input mode offers demo mode; normal firmware returns to live mode after reboot. Bench zero is independent from feeding's automatically captured baseline.
 
 The recorded cup test rose from about 107 mV to 414 mV and returned to 106 mV after removal. The user confirmed connecting the sensor but skipped the proposed multimeter test; the divider has not been independently verified. Response and recovery do not establish wiring safety or BAC accuracy.
 
-In the party version, Start feeding first shows a five-second countdown. Only the following ten-second BLOW phase contributes to the peak. Normal feeding screens show a response meter; the bench screen retains raw millivolts. Higher game levels change animations and never damage pets.
+In the party version, Wake / feed starts a five-second countdown as soon as the rolling clean-air signal is ready. Only the following ten-second BLOW phase contributes to the peak. Normal feeding screens show a response meter; the bench screen retains raw millivolts. Higher game levels change animations and never damage pets.

@@ -52,10 +52,13 @@ try:
                 if line.startswith('CMD'):
                     acknowledged=line==f'CMD {request_id}'
                     if acknowledged: acknowledged_at=time.monotonic()
+                elif acknowledged and line.startswith('ERROR') and marker!='ERROR':
+                    raise RuntimeError(f'{text}: {line}')
                 elif acknowledged and line.startswith(marker):
                     try:
                         result=json.loads(line) if marker=='{' else line
                         if marker=='{' and result.get('request_id')!=request_id: continue
+                        report['last_reply']={'command':text,'result':result}
                         return result
                     except json.JSONDecodeError:
                         report['invalid_reply']={'command':text,'line':line}
@@ -125,14 +128,17 @@ try:
         check('Sensor monitor samples ADC while game input stays simulated',s['mq3_samples']>=8 and 0<=s['mq3_adc']<=4095 and 0<=s['mq3_mv']<=3300 and s['sensor']=='SIMULATED')
         check('Bench readings never create pet history',s['feeds']==0 and s['history_count']==0)
         cmd('ui next'); s=cmd('ui select'); check('Baseline clear action leaves no zero',s['mq3_baseline_mv']==-1)
-        cmd('ui next'); s=cmd('ui select'); check('Monitor exit stops acquisition',s['page']=='menu' and not s['mq3_active'])
-        n=s['mq3_samples']; drain(.3); check('ADC stays stopped outside bench screen',cmd('status')['mq3_samples']==n)
-        cmd('test sensor 100'); cmd('input live'); cmd('cal default'); cmd('select 0'); before=cmd('status'); s=cmd('ui select')
+        cmd('ui next'); s=cmd('ui select'); check('Demo bench exit stops acquisition',s['page']=='menu' and not s['mq3_active'])
+        n=s['mq3_samples']; drain(.3); check('Demo mode keeps ADC stopped outside bench screen',cmd('status')['mq3_samples']==n)
+        cmd('test sensor 100'); cmd('input live'); s=cmd('cal default')
         check('Live default is the gentler 1200 mV span',s['sensor_span_mv']==1200)
-        check('Live feed opens a fresh clean-air preparation',s['sensor']=='MQ3' and s['page']=='feed' and not s['feed_ready'])
-        s=cmd('ui select'); check('Cannot start before clean-air window',s['page']=='feed' and s['feeds']==before['feeds'])
-        drain(11.2); s=cmd('status'); check('Stable fresh air enables live feeding',s['feed_ready'])
-        s=cmd('ui select'); check('Live feed starts countdown with a frozen baseline',s['page']=='countdown' and s['feed_baseline_mv']==100)
+        check('Live acquisition starts in the background on the tank',s['page']=='tank' and s['mq3_active'] and not s['feed_ready'])
+        cmd('select 0'); before=cmd('status'); s=cmd('ui select')
+        check('Unsettled input only shows recovery when feeding is requested',s['page']=='feed' and s['feeds']==before['feeds'])
+        s=cmd('ui back'); check('Pending recovery can be cancelled',s['page']=='pet')
+        drain(11.2); s=cmd('status'); check('Clean-air window settles while viewing a pet',s['page']=='pet' and s['feed_ready'] and s['mq3_samples']>=100)
+        n=s['mq3_samples']; s=cmd('ui select')
+        check('One Feed press starts countdown using background baseline',s['page']=='countdown' and s['feed_baseline_mv']==100 and s['mq3_samples']>=n)
         cmd('test sensor 900'); drain(3); s=cmd('status'); check('Countdown ignores early exposure',s['page']=='countdown' and s['feed_peak_mv']==100)
         cmd('test sensor 400'); drain(2.3); s=cmd('status'); check('Five seconds opens BLOW capture',s['page']=='sampling')
         cmd('test sensor 400'); drain(10.4); s=cmd('status')
@@ -141,15 +147,18 @@ try:
         check('Real history stores provenance and original voltages',r['source']=='MQ3' and r['baseline_mv']==100 and r['peak_mv']==400 and r['span_mv']==1200)
         check('Old demo history stays explicitly demo',live_history[1]['source']=='DEMO')
         check('Fake serial feed is rejected in live mode',cmd('sample 85','ERROR').startswith('ERROR'))
+        n=s['mq3_samples']; drain(.4); s=cmd('status'); check('Sensor keeps recovering on the result screen',s['page']=='result' and s['mq3_active'] and s['mq3_samples']>n)
         cmd('select 1'); check('Other owner keeps original history',cmd('history')['history']==goose_history)
-        cmd('ui select'); drain(11.2); s=cmd('ui select')
+        cmd('ui select'); drain(11.2); s=cmd('status')
         check('Lingering vapor cannot feed the next owner',s['page']=='feed' and s['recovering'] and s['feeds']==1)
-        cmd('test sensor 100'); drain(11.2); s=cmd('ui select')
-        check('Recovered sensor can start next owner',s['page']=='countdown')
+        cmd('test sensor 100'); drain(11.2); s=cmd('status')
+        check('Queued feeding starts automatically after recovery',s['page']=='countdown')
         cmd('ui back'); drain(.3); s=cmd('status'); check('Cancelling never records a live feed',s['page']=='pet' and s['feeds']==1)
-        cmd('ui select'); drain(11.2); cmd('ui select'); drain(5.2); cmd('test sensor high'); drain(.4); s=cmd('status')
+        cmd('ui select'); drain(5.2); cmd('test sensor high'); drain(.4); s=cmd('status')
         check('Out-of-range input aborts without history',s['page']=='feed' and s['feeds']==1)
         check('Rejected live samples leave history unchanged',cmd('history')['history']==goose_history)
+        cmd('test sensor 100'); drain(11.2); s=cmd('status'); check('Rejected captures do not retry automatically',s['page']=='feed' and s['feeds']==1 and s['feed_ready'])
+        cmd('ui select'); s=cmd('ui back'); check('Explicit retry starts and can be cancelled',s['page']=='pet' and s['feeds']==1)
         cmd('test sensor off'); boot=s['boot']; cmd('reboot','REBOOT'); device.close(); time.sleep(2); device.open(); drain(2)
         cmd('select 0'); check('Live and demo provenance survive restart',cmd('history')['history']==live_history)
         # The entire party loop uses the physical button handlers, with test-only time/bubble controls.
@@ -174,6 +183,7 @@ try:
         cmd('test minutes 1'); s=cmd('status'); check('Ten minutes makes pet drowsy',s['state']=='DROWSY' and s['reward_ready'])
         cmd('test minutes 10'); s=cmd('status'); check('Twenty minutes makes pet sleep',s['state']=='ASLEEP' and s['naps']>=2)
         # A zero reading is a complete check-in and has identical loot eligibility.
+        if s['cooldown_ms']: drain(s['cooldown_ms']/1000+.15) # Accelerated game time does not skip the real reboot cooldown.
         s=cmd('sample 0'); check('Zero response wakes and earns third check-in',s['state']=='CHILL' and s['energy']==100 and s['checkins']==3)
         check('Third spaced check-in guarantees a hat',s['hats']>1)
         cmd('select 0'); cmd('ui next'); cmd('ui next'); cmd('ui next'); s=cmd('ui select')

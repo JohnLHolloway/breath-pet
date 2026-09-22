@@ -16,6 +16,7 @@ FunStorage fun;
 Mq3Monitor mq3;
 SensorFeed sensorFeed;
 bool inputLive=!BREATH_PET_TEST_MODE;
+bool feedPending=false;
 uint32_t responseId=0;
 TouchLibCSTSelf selfTouch(Wire,18,17,0x15,21);
 TouchLibCSTMutual mutualTouch(Wire,18,17,0x1A,21);
@@ -54,8 +55,10 @@ bool hasPlayer() { return selected>=0 && selected<MAX_PLAYERS && storage.data.pl
 Player &player() { return storage.data.players[selected]; }
 void show(Page next) {
   if((page==SAMPLING || page==COUNTDOWN) && next!=SAMPLING && next!=COUNTDOWN) sensorFeed.cancel();
-  if ((next==SENSOR && page!=SENSOR) || (next==FEED && inputLive && page!=FEED)) mq3.begin(millis());
-  if (next!=SENSOR && !(inputLive && (next==FEED || next==SAMPLING || next==COUNTDOWN))) mq3.active=false;
+  // Live input keeps a rolling clean-air window on every screen.
+  if(inputLive || next==SENSOR) { if(!mq3.active) mq3.begin(millis()); }
+  else mq3.active=false;
+  if(next!=FEED) feedPending=false;
   page=next; cursor=0; notice="";
   if(next==PLAY) catches=0;
   if (next==TANK) {
@@ -92,7 +95,7 @@ bool capture(int raw) {
 void beginFeed() {
   if (!hasPlayer()) return;
   if (cooldown(selected)) { message("PET IS FULL. WAIT A MOMENT."); return; }
-  if(inputLive && !sensorFeed.start(mq3,millis())) { message("KEEP CUP AWAY; WAIT FOR CLEAN AIR"); return; }
+  if(inputLive && !sensorFeed.start(mq3,millis())) return;
   samplingStart=millis(); show(COUNTDOWN);
 }
 void finishLiveFeed() {
@@ -173,13 +176,16 @@ void activate() {
       break;
     }
     case PET:
-      if (cursor==0) show(FEED);
+      if (cursor==0) { show(FEED); if(inputLive) { feedPending=true; mq3.poll(millis()); beginFeed(); } }
       else if (cursor==1) { historyPage=0; show(HISTORY); }
       else if(cursor==2) restPet();
       else if(cursor==3) show(WARDROBE);
       else show(PLAY);
       break;
-    case FEED: beginFeed(); break;
+    case FEED:
+      if(inputLive && feedPending) show(PET);
+      else { feedPending=inputLive; beginFeed(); }
+      break;
     case RESULT: show(cursor==0?TANK:PET); break;
     case HISTORY: show(PET); break;
     case MENU:
@@ -248,7 +254,7 @@ void status(bool waitForSpace) {
     delay(1);
   }
   char record[2048];
-  size_t length=snprintf(record,sizeof(record),"{\"app\":\"breath-pet\",\"version\":6,\"sensor\":\"%s\",\"page\":\"%s\",\"cursor\":%d,\"selected\":%d,\"players\":%d,\"night\":%lu,\"boot\":%lu,\"zero\":%u,\"span\":%u,\"display\":%s,\"psram\":%u,\"frames\":%lu,\"uptime_ms\":%lu,\"touch\":\"%s\",\"touch_taps\":%lu,\"care_presses\":%lu,\"sample_presses\":%lu,\"storage_ok\":%s,\"demo_raw\":%d,\"picker_name\":\"%s\",\"picker_pet\":%d,\"cooldown_ms\":%lu",
+  size_t length=snprintf(record,sizeof(record),"{\"app\":\"breath-pet\",\"version\":7,\"sensor\":\"%s\",\"page\":\"%s\",\"cursor\":%d,\"selected\":%d,\"players\":%d,\"night\":%lu,\"boot\":%lu,\"zero\":%u,\"span\":%u,\"display\":%s,\"psram\":%u,\"frames\":%lu,\"uptime_ms\":%lu,\"touch\":\"%s\",\"touch_taps\":%lu,\"care_presses\":%lu,\"sample_presses\":%lu,\"storage_ok\":%s,\"demo_raw\":%d,\"picker_name\":\"%s\",\"picker_pet\":%d,\"cooldown_ms\":%lu",
     inputLive?"MQ3":"SIMULATED",PAGE_NAMES[page],cursor,selected,storage.count(),(unsigned long)storage.data.night,
     (unsigned long)storage.data.boot,storage.data.zero,storage.data.span,displayReady?"true":"false",
     ESP.getPsramSize(),(unsigned long)frames,(unsigned long)millis(),touchName,(unsigned long)touchTaps,
@@ -266,7 +272,7 @@ void status(bool waitForSpace) {
   length+=snprintf(record+length,sizeof(record)-length,",\"test_mode\":%s,\"mq3_active\":%s,\"mq3_mv\":%d,\"mq3_adc\":%d,\"mq3_samples\":%lu,\"mq3_spread_mv\":%d,\"mq3_can_zero\":%s,\"mq3_baseline_mv\":%d",
     BREATH_PET_TEST_MODE?"true":"false",mq3.active?"true":"false",mq3.millivolts,mq3.raw,(unsigned long)mq3.samples,mq3.spread(),mq3.canZero()?"true":"false",mq3.hasBaseline?mq3.baseline:-1);
   length+=snprintf(record+length,sizeof(record)-length,",\"feed_ready\":%s,\"feed_baseline_mv\":%d,\"feed_peak_mv\":%d,\"sensor_span_mv\":%u,\"recovering\":%s,\"request_id\":%lu}\n",
-    (page==FEED && inputLive && sensorFeed.ready(mq3))?"true":"false",sensorFeed.baseline,sensorFeed.peak,storage.data.sensorSpanMv,sensorFeed.recovered(mq3)?"false":"true",(unsigned long)responseId);
+    (inputLive && page!=COUNTDOWN && page!=SAMPLING && sensorFeed.ready(mq3))?"true":"false",sensorFeed.baseline,sensorFeed.peak,storage.data.sensorSpanMv,sensorFeed.recovered(mq3)?"false":"true",(unsigned long)responseId);
   // Small writes also handle the hardware USB CDC ring buffer wrapping.
   size_t offset=0; uint32_t progress=millis();
   while(offset<length) {
@@ -478,7 +484,12 @@ void loop() {
     } else if (c!='\r') { if (input.length()<64) input+=c; else overflow=true; }
   }
   now=millis(); // Commands may reset timers or take time (e.g. screenshot).
+  if(inputLive || page==SENSOR) { if(!mq3.active) mq3.begin(now); }
+  else mq3.active=false;
   bool sampled=mq3.poll(now);
+  if(page==FEED && feedPending && sensorFeed.ready(mq3) && !cooldown(selected)) {
+    beginFeed(); now=millis(); // beginFeed resets samplingStart; avoid unsigned timer underflow.
+  }
   if(page==COUNTDOWN && now-samplingStart>=5000) {
     samplingStart=now; sensorFeed.started=now; show(SAMPLING);
   }
