@@ -1,0 +1,10 @@
+.pio/
+.cache/
+.venv/
+artifacts/
+test-results.json
+*.log
+backups/
+.env
+__pycache__/
+*.pyc
