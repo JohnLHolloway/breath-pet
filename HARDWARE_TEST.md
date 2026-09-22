@@ -45,6 +45,8 @@ The gallery utility compares normal saved fields and exact histories before and 
 
 ## Physical limits and next checks
 
+The [Rev A carrier PCB and printed case](hardware/README.md) are a separate, **unbuilt** hardware prototype. KiCad ERC/DRC/parity checks, netlist assertions, manufacturing exports and nominal CAD collision checks pass; no fabricated carrier or printed enclosure has been tested. These CAD checks do not extend the breadboard's 99-check firmware result to the new hardware. Donor-can identification, fit gauges, component matching, meter checks, cup response and heat testing remain.
+
 The planned assembly uses 5 V module power, common ground and two 8 kΩ resistor chains between AO, GPIO1 and GND. **Divider voltages have not been independently verified with a meter.** See the [wiring checks](MQ3_WIRING.md#verify-the-divider).
 
 Earlier cup testing observed approximately 107 mV in clean air, 414 mV during exposure to sake vapor and 106 mV after removal. Subsequent live feeding also recorded higher responses and stored the original baseline/peak values. This supports qualitative response, recovery and persistence, not a calibrated alcohol measurement.

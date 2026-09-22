@@ -1,0 +1,25 @@
+{
+  "status": "CAD checked; physical fit and sensor variant pending",
+  "critical_nets_checked": 7,
+  "smt_placements": 8,
+  "divider_nominal_ratio": 0.5,
+  "divider_1pct_ratio_range": [
+    0.495,
+    0.505
+  ],
+  "adc_max_at_5v25_input_v": 2.65125,
+  "direct_effective_load_ohm": 4731.45,
+  "files": {
+    "carrier-B_Cu.gbl": "0db865b8e4282d54bbfdc341f2b8f5f0ee3478f185fc9849f25776164c6ceb3d",
+    "carrier-B_Mask.gbs": "666cfd54159bd98da39463da31bf026f13002f89354c6de511e336c330f60bcc",
+    "carrier-B_Silkscreen.gbo": "65352006cef38ecf09f3347f526962580e6abd03f287f0fe8a1b7fbc5468ecef",
+    "carrier-Edge_Cuts.gm1": "a00ab278297cced48c7e0c8fdab9e021ae7f9fd9e2de040735209182a21b18c0",
+    "carrier-F_Cu.gtl": "2d5cfa25da141332269c13e51340fa7a26586bd0e505fabbb0eb9df5836b0a3d",
+    "carrier-F_Mask.gts": "43770257d78f7e1f23dee8a608eaac98b393dc53d7a2b3e1aeaf55b7117443d4",
+    "carrier-F_Paste.gtp": "b5873a90592b2eb838c015f35145479b830ad609d874191535b4c0b9efed9aef",
+    "carrier-F_Silkscreen.gto": "bbf5201d923bb1468e85c7025b9471a23f5fab6f3175cc94ac0b88d49acf19ed",
+    "carrier-job.gbrjob": "12200b2ed54a18fab1a52a530a2ab79f34458de47a3c949066466964155c68a4",
+    "carrier-NPTH.drl": "06f5d775a3bc01c263c9be09e4aebf58e171b53164af8d2c013a9c16df14854d",
+    "carrier-PTH.drl": "373bb6cf035d59d0c0a80950af4d4796526b70290a4c0e7e64bd36d47295cf5a"
+  }
+}

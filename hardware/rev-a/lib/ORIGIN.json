@@ -1,0 +1,14 @@
+{
+  "repo": "https://github.com/KiCad/kicad-footprints",
+  "commit": "7ebfa6b23cc292a56f751b7b5f4a0e12eeef69dd",
+  "files": [
+    "Connector_PinSocket_2.54mm.pretty/PinSocket_1x12_P2.54mm_Vertical.kicad_mod",
+    "Connector_PinHeader_2.54mm.pretty/PinHeader_1x02_P2.54mm_Vertical.kicad_mod",
+    "Connector_JST.pretty/JST_XH_B3B-XH-A_1x03_P2.50mm_Vertical.kicad_mod",
+    "Resistor_SMD.pretty/R_0805_2012Metric.kicad_mod",
+    "Capacitor_SMD.pretty/C_0805_2012Metric.kicad_mod",
+    "Package_TO_SOT_SMD.pretty/SOT-23.kicad_mod",
+    "MountingHole.pretty/MountingHole_2.7mm_M2.5.kicad_mod",
+    "TestPoint.pretty/TestPoint_Pad_D1.5mm.kicad_mod"
+  ]
+}

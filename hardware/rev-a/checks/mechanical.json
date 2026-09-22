@@ -1,0 +1,64 @@
+{
+  "cadquery": "2.8.0",
+  "physical_fit_verified": false,
+  "envelope_interferences": [],
+  "parts": [
+    {
+      "name": "case-base",
+      "solid_count": 1,
+      "valid": true,
+      "size_mm": [
+        76.0,
+        78.0,
+        25.001
+      ],
+      "volume_mm3": 33774.978
+    },
+    {
+      "name": "case-cover",
+      "solid_count": 1,
+      "valid": true,
+      "size_mm": [
+        76.0,
+        78.0,
+        2.02
+      ],
+      "volume_mm3": 6403.085
+    },
+    {
+      "name": "header-fit-gauge",
+      "solid_count": 1,
+      "valid": true,
+      "size_mm": [
+        68.0,
+        32.0,
+        1.201
+      ],
+      "volume_mm3": 2416.973
+    },
+    {
+      "name": "sensor-fit-gauge",
+      "solid_count": 1,
+      "valid": true,
+      "size_mm": [
+        23.975,
+        24.016,
+        1.217
+      ],
+      "volume_mm3": 527.017
+    }
+  ],
+  "assumed_socket_height_mm": 8.5,
+  "assumed_male_spacer_mm": 2.54,
+  "pcb_bottom_above_case_floor_mm": 5.0,
+  "lid_bottom_z_mm": 25.0,
+  "sensor_envelope_mm": {
+    "diameter": 20,
+    "height_above_pcb": 19
+  },
+  "notes": [
+    "Print gauges before PCB order.",
+    "Case is a vented prototype, not liquid sealed.",
+    "Verify heater temperature and real stack height before enclosed operation."
+  ]
+}

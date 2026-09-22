@@ -1,0 +1,3 @@
+(fp_lib_table
+ (lib (name "BreathPet")(type "KiCad")(uri "${KIPRJMOD}/lib/BreathPet.pretty")(options "")(descr "Pinned KiCad footprints"))
+)

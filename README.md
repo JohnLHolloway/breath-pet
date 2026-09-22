@@ -40,6 +40,12 @@ Use the module's **5 V supply, common ground, and AO through an equal-resistance
 
 Follow the [wiring diagram and meter checks](MQ3_WIRING.md) before connecting the ADC input. **MQ-3 setup** retains the millivolt trace for diagnostics; normal play shows game levels and a response bar. Response settings adjust game sensitivity, not BAC calibration. Normal firmware boots in LIVE mode; Menu > Change input mode enables DEMO for the current boot.
 
+## Custom PCB and printable case
+
+[Rev A hardware](hardware/README.md) replaces the breadboard with a socketed LILYGO carrier and a directly mounted MQ-3. It includes editable KiCad files, a Gerber ZIP, JLCPCB BOM/CPL preparation, STEP models, and Ender 3 case/fit-gauge STLs. **This is an unbuilt prototype:** CAD checks pass, but the actual sensor variant, printed fit and powered behavior still need verification. The case is optional.
+
+![CAD prototype of the direct-sensor carrier](hardware/rev-a/previews/electronics.png)
+
 ## Build and upload
 
 With Python and Git installed, run in PowerShell:

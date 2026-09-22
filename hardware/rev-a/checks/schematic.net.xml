@@ -1,0 +1,864 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<export version="E">
+  <design>
+    <source>carrier.kicad_sch</source>
+    <date>2026-09-22T15:43:01</date>
+    <tool>Eeschema 10.0.6</tool>
+    <sheet number="1" name="/" tstamps="/">
+      <title_block>
+        <title>Breath Pet - T-Display-S3 USB carrier</title>
+        <company/>
+        <rev>A</rev>
+        <date>2026-09-22</date>
+        <source>carrier.kicad_sch</source>
+        <comment number="1" value="Unbuilt prototype - USB only - direct MQ-3 or module assembly variants"/>
+        <comment number="2" value=""/>
+        <comment number="3" value=""/>
+        <comment number="4" value=""/>
+        <comment number="5" value=""/>
+        <comment number="6" value=""/>
+        <comment number="7" value=""/>
+        <comment number="8" value=""/>
+        <comment number="9" value=""/>
+      </title_block>
+    </sheet>
+  </design>
+  <components>
+    <comp ref="C1">
+      <value>100nF X7R 50V</value>
+      <footprint>BreathPet:C_0805_2012Metric</footprint>
+      <fields>
+        <field name="Footprint">BreathPet:C_0805_2012Metric</field>
+        <field name="Datasheet"/>
+        <field name="Description"/>
+      </fields>
+      <libsource lib="BreathPet" part="C" description=""/>
+      <property name="Sheetname" value="carrier"/>
+      <property name="Sheetfile" value="carrier.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>d081f2ad-0d48-5be4-b156-cd581d957a1b</tstamps>
+      <units>
+        <unit name="A">
+          <pins>
+            <pin num="1"/>
+            <pin num="2"/>
+          </pins>
+        </unit>
+      </units>
+    </comp>
+    <comp ref="C2">
+      <value>10uF X5R 16V</value>
+      <footprint>BreathPet:C_0805_2012Metric</footprint>
+      <fields>
+        <field name="Footprint">BreathPet:C_0805_2012Metric</field>
+        <field name="Datasheet"/>
+        <field name="Description"/>
+      </fields>
+      <libsource lib="BreathPet" part="C" description=""/>
+      <property name="Sheetname" value="carrier"/>
+      <property name="Sheetfile" value="carrier.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>34fea9f7-b302-5d91-9734-b6428e2ad12c</tstamps>
+      <units>
+        <unit name="A">
+          <pins>
+            <pin num="1"/>
+            <pin num="2"/>
+          </pins>
+        </unit>
+      </units>
+    </comp>
+    <comp ref="C3">
+      <value>100nF X7R 50V</value>
+      <footprint>BreathPet:C_0805_2012Metric</footprint>
+      <fields>
+        <field name="Footprint">BreathPet:C_0805_2012Metric</field>
+        <field name="Datasheet"/>
+        <field name="Description"/>
+      </fields>
+      <libsource lib="BreathPet" part="C" description=""/>
+      <property name="Sheetname" value="carrier"/>
+      <property name="Sheetfile" value="carrier.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>b18b43a4-577f-5335-80ad-7eaae8c9280a</tstamps>
+      <units>
+        <unit name="A">
+          <pins>
+            <pin num="1"/>
+            <pin num="2"/>
+          </pins>
+        </unit>
+      </units>
+    </comp>
+    <comp ref="D1">
+      <value>BAT54S</value>
+      <footprint>BreathPet:SOT-23</footprint>
+      <fields>
+        <field name="Footprint">BreathPet:SOT-23</field>
+        <field name="Datasheet"/>
+        <field name="Description"/>
+      </fields>
+      <libsource lib="BreathPet" part="CLAMP" description=""/>
+      <property name="Sheetname" value="carrier"/>
+      <property name="Sheetfile" value="carrier.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>7ee3e3f9-79f3-53c3-aee0-494d7ceb226a</tstamps>
+      <units>
+        <unit name="A">
+          <pins>
+            <pin num="3"/>
+            <pin num="2"/>
+            <pin num="1"/>
+          </pins>
+        </unit>
+      </units>
+    </comp>
+    <comp ref="H1">
+      <value>M2.5 / NPTH</value>
+      <footprint>BreathPet:MountingHole_2.7mm_M2.5</footprint>
+      <fields>
+        <field name="Footprint">BreathPet:MountingHole_2.7mm_M2.5</field>
+        <field name="Datasheet"/>
+        <field name="Description"/>
+      </fields>
+      <libsource lib="BreathPet" part="HOLE" description=""/>
+      <property name="Sheetname" value="carrier"/>
+      <property name="Sheetfile" value="carrier.kicad_sch"/>
+      <property name="exclude_from_bom"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>57dcf9dc-51fc-5134-bdec-a299c8d7e7bd</tstamps>
+      <units>
+        <unit name="A">
+          <pins/>
+        </unit>
+      </units>
+    </comp>
+    <comp ref="H2">
+      <value>M2.5 / NPTH</value>
+      <footprint>BreathPet:MountingHole_2.7mm_M2.5</footprint>
+      <fields>
+        <field name="Footprint">BreathPet:MountingHole_2.7mm_M2.5</field>
+        <field name="Datasheet"/>
+        <field name="Description"/>
+      </fields>
+      <libsource lib="BreathPet" part="HOLE" description=""/>
+      <property name="Sheetname" value="carrier"/>
+      <property name="Sheetfile" value="carrier.kicad_sch"/>
+      <property name="exclude_from_bom"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>ec9ab6c6-0631-52d3-973f-beaa7ad4a13e</tstamps>
+      <units>
+        <unit name="A">
+          <pins/>
+        </unit>
+      </units>
+    </comp>
+    <comp ref="H3">
+      <value>M2.5 / NPTH</value>
+      <footprint>BreathPet:MountingHole_2.7mm_M2.5</footprint>
+      <fields>
+        <field name="Footprint">BreathPet:MountingHole_2.7mm_M2.5</field>
+        <field name="Datasheet"/>
+        <field name="Description"/>
+      </fields>
+      <libsource lib="BreathPet" part="HOLE" description=""/>
+      <property name="Sheetname" value="carrier"/>
+      <property name="Sheetfile" value="carrier.kicad_sch"/>
+      <property name="exclude_from_bom"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>e0add9b7-6ec6-53d3-8149-ade1853c051f</tstamps>
+      <units>
+        <unit name="A">
+          <pins/>
+        </unit>
+      </units>
+    </comp>
+    <comp ref="J1">
+      <value>LILYGO P1 / upper row</value>
+      <footprint>BreathPet:PinSocket_1x12_P2.54mm_Vertical</footprint>
+      <fields>
+        <field name="Footprint">BreathPet:PinSocket_1x12_P2.54mm_Vertical</field>
+        <field name="Datasheet"/>
+        <field name="Description"/>
+      </fields>
+      <libsource lib="BreathPet" part="P1" description=""/>
+      <property name="Sheetname" value="carrier"/>
+      <property name="Sheetfile" value="carrier.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>1953719d-8fa7-5fe3-b05f-46237e1bb8ce</tstamps>
+      <units>
+        <unit name="A">
+          <pins>
+            <pin num="1"/>
+            <pin num="2"/>
+            <pin num="3"/>
+            <pin num="4"/>
+            <pin num="5"/>
+            <pin num="6"/>
+            <pin num="7"/>
+            <pin num="8"/>
+            <pin num="9"/>
+            <pin num="10"/>
+            <pin num="11"/>
+            <pin num="12"/>
+          </pins>
+        </unit>
+      </units>
+    </comp>
+    <comp ref="J2">
+      <value>LILYGO P2 / lower row</value>
+      <footprint>BreathPet:PinSocket_1x12_P2.54mm_Vertical</footprint>
+      <fields>
+        <field name="Footprint">BreathPet:PinSocket_1x12_P2.54mm_Vertical</field>
+        <field name="Datasheet"/>
+        <field name="Description"/>
+      </fields>
+      <libsource lib="BreathPet" part="P2" description=""/>
+      <property name="Sheetname" value="carrier"/>
+      <property name="Sheetfile" value="carrier.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>022cc546-c89f-5d71-8e5c-ecf9a9f7a8df</tstamps>
+      <units>
+        <unit name="A">
+          <pins>
+            <pin num="1"/>
+            <pin num="2"/>
+            <pin num="3"/>
+            <pin num="4"/>
+            <pin num="5"/>
+            <pin num="6"/>
+            <pin num="7"/>
+            <pin num="8"/>
+            <pin num="9"/>
+            <pin num="10"/>
+            <pin num="11"/>
+            <pin num="12"/>
+          </pins>
+        </unit>
+      </units>
+    </comp>
+    <comp ref="J3">
+      <value>MQ3 cable / 5V GND AO</value>
+      <footprint>BreathPet:JST_XH_B3B-XH-A_1x03_P2.50mm_Vertical</footprint>
+      <fields>
+        <field name="Footprint">BreathPet:JST_XH_B3B-XH-A_1x03_P2.50mm_Vertical</field>
+        <field name="Datasheet"/>
+        <field name="Description"/>
+      </fields>
+      <libsource lib="BreathPet" part="JST" description=""/>
+      <property name="Sheetname" value="carrier"/>
+      <property name="Sheetfile" value="carrier.kicad_sch"/>
+      <property name="dnp"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>961ad45c-af20-551d-8a5c-193f5d635dda</tstamps>
+      <units>
+        <unit name="A">
+          <pins>
+            <pin num="1"/>
+            <pin num="2"/>
+            <pin num="3"/>
+          </pins>
+        </unit>
+      </units>
+    </comp>
+    <comp ref="JP1">
+      <value>SENSOR POWER / fit shunt</value>
+      <footprint>BreathPet:PinHeader_1x02_P2.54mm_Vertical</footprint>
+      <fields>
+        <field name="Footprint">BreathPet:PinHeader_1x02_P2.54mm_Vertical</field>
+        <field name="Datasheet"/>
+        <field name="Description"/>
+      </fields>
+      <libsource lib="BreathPet" part="JP" description=""/>
+      <property name="Sheetname" value="carrier"/>
+      <property name="Sheetfile" value="carrier.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>fd2a838d-89b9-5ce0-b93c-19d5343f09eb</tstamps>
+      <units>
+        <unit name="A">
+          <pins>
+            <pin num="1"/>
+            <pin num="2"/>
+          </pins>
+        </unit>
+      </units>
+    </comp>
+    <comp ref="R1">
+      <value>8.2k 1%</value>
+      <footprint>BreathPet:R_0805_2012Metric</footprint>
+      <fields>
+        <field name="Footprint">BreathPet:R_0805_2012Metric</field>
+        <field name="Datasheet"/>
+        <field name="Description"/>
+      </fields>
+      <libsource lib="BreathPet" part="R" description=""/>
+      <property name="Sheetname" value="carrier"/>
+      <property name="Sheetfile" value="carrier.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>ef9b6d99-5ee8-5898-bf30-0f751b7547f0</tstamps>
+      <units>
+        <unit name="A">
+          <pins>
+            <pin num="1"/>
+            <pin num="2"/>
+          </pins>
+        </unit>
+      </units>
+    </comp>
+    <comp ref="R2">
+      <value>8.2k 1%</value>
+      <footprint>BreathPet:R_0805_2012Metric</footprint>
+      <fields>
+        <field name="Footprint">BreathPet:R_0805_2012Metric</field>
+        <field name="Datasheet"/>
+        <field name="Description"/>
+      </fields>
+      <libsource lib="BreathPet" part="RV" description=""/>
+      <property name="Sheetname" value="carrier"/>
+      <property name="Sheetfile" value="carrier.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>8d4d022c-8bfc-50af-adcb-9d5709915c6a</tstamps>
+      <units>
+        <unit name="A">
+          <pins>
+            <pin num="1"/>
+            <pin num="2"/>
+          </pins>
+        </unit>
+      </units>
+    </comp>
+    <comp ref="R3">
+      <value>1k 1%</value>
+      <footprint>BreathPet:R_0805_2012Metric</footprint>
+      <fields>
+        <field name="Footprint">BreathPet:R_0805_2012Metric</field>
+        <field name="Datasheet"/>
+        <field name="Description"/>
+      </fields>
+      <libsource lib="BreathPet" part="R" description=""/>
+      <property name="Sheetname" value="carrier"/>
+      <property name="Sheetfile" value="carrier.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>4944ed74-4268-5dda-b980-a20e81a24302</tstamps>
+      <units>
+        <unit name="A">
+          <pins>
+            <pin num="1"/>
+            <pin num="2"/>
+          </pins>
+        </unit>
+      </units>
+    </comp>
+    <comp ref="R4">
+      <value>6.65k 1% / see variant table</value>
+      <footprint>BreathPet:R_0805_2012Metric</footprint>
+      <fields>
+        <field name="Footprint">BreathPet:R_0805_2012Metric</field>
+        <field name="Datasheet"/>
+        <field name="Description"/>
+      </fields>
+      <libsource lib="BreathPet" part="RV" description=""/>
+      <property name="Sheetname" value="carrier"/>
+      <property name="Sheetfile" value="carrier.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>afe76d31-b6af-52b5-838a-56b748cf3ff3</tstamps>
+      <units>
+        <unit name="A">
+          <pins>
+            <pin num="1"/>
+            <pin num="2"/>
+          </pins>
+        </unit>
+      </units>
+    </comp>
+    <comp ref="S1">
+      <value>MQ-3 / verify can variant</value>
+      <footprint>BreathPet:MQ3_Classic_9.5mm</footprint>
+      <fields>
+        <field name="Footprint">BreathPet:MQ3_Classic_9.5mm</field>
+        <field name="Datasheet"/>
+        <field name="Description"/>
+      </fields>
+      <libsource lib="BreathPet" part="MQ3" description=""/>
+      <property name="Sheetname" value="carrier"/>
+      <property name="Sheetfile" value="carrier.kicad_sch"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>6d20ea41-68e2-540e-a63c-712979e945ca</tstamps>
+      <units>
+        <unit name="A">
+          <pins>
+            <pin num="1"/>
+            <pin num="2"/>
+            <pin num="3"/>
+            <pin num="6"/>
+            <pin num="5"/>
+            <pin num="4"/>
+          </pins>
+        </unit>
+      </units>
+    </comp>
+    <comp ref="TP1">
+      <value>+5V_SENSOR</value>
+      <footprint>BreathPet:TestPoint_Pad_D1.5mm</footprint>
+      <fields>
+        <field name="Footprint">BreathPet:TestPoint_Pad_D1.5mm</field>
+        <field name="Datasheet"/>
+        <field name="Description"/>
+      </fields>
+      <libsource lib="BreathPet" part="TP" description=""/>
+      <property name="Sheetname" value="carrier"/>
+      <property name="Sheetfile" value="carrier.kicad_sch"/>
+      <property name="exclude_from_bom"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>e43e2b58-ba20-5206-a687-404c4044e57a</tstamps>
+      <units>
+        <unit name="A">
+          <pins>
+            <pin num="1"/>
+          </pins>
+        </unit>
+      </units>
+    </comp>
+    <comp ref="TP2">
+      <value>MQ3_AO</value>
+      <footprint>BreathPet:TestPoint_Pad_D1.5mm</footprint>
+      <fields>
+        <field name="Footprint">BreathPet:TestPoint_Pad_D1.5mm</field>
+        <field name="Datasheet"/>
+        <field name="Description"/>
+      </fields>
+      <libsource lib="BreathPet" part="TP" description=""/>
+      <property name="Sheetname" value="carrier"/>
+      <property name="Sheetfile" value="carrier.kicad_sch"/>
+      <property name="exclude_from_bom"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>d4225da6-3eec-5929-99e8-5c4e2b6414f0</tstamps>
+      <units>
+        <unit name="A">
+          <pins>
+            <pin num="1"/>
+          </pins>
+        </unit>
+      </units>
+    </comp>
+    <comp ref="TP3">
+      <value>ADC_GPIO1</value>
+      <footprint>BreathPet:TestPoint_Pad_D1.5mm</footprint>
+      <fields>
+        <field name="Footprint">BreathPet:TestPoint_Pad_D1.5mm</field>
+        <field name="Datasheet"/>
+        <field name="Description"/>
+      </fields>
+      <libsource lib="BreathPet" part="TP" description=""/>
+      <property name="Sheetname" value="carrier"/>
+      <property name="Sheetfile" value="carrier.kicad_sch"/>
+      <property name="exclude_from_bom"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>33cce59c-6e8a-5ad0-ac73-13b813084d7d</tstamps>
+      <units>
+        <unit name="A">
+          <pins>
+            <pin num="1"/>
+          </pins>
+        </unit>
+      </units>
+    </comp>
+    <comp ref="TP4">
+      <value>GND</value>
+      <footprint>BreathPet:TestPoint_Pad_D1.5mm</footprint>
+      <fields>
+        <field name="Footprint">BreathPet:TestPoint_Pad_D1.5mm</field>
+        <field name="Datasheet"/>
+        <field name="Description"/>
+      </fields>
+      <libsource lib="BreathPet" part="TP" description=""/>
+      <property name="Sheetname" value="carrier"/>
+      <property name="Sheetfile" value="carrier.kicad_sch"/>
+      <property name="exclude_from_bom"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>fa045deb-0b9d-553d-9396-52372013acb8</tstamps>
+      <units>
+        <unit name="A">
+          <pins>
+            <pin num="1"/>
+          </pins>
+        </unit>
+      </units>
+    </comp>
+    <comp ref="TP5">
+      <value>ADC_GPIO1</value>
+      <footprint>BreathPet:TestPoint_Pad_D1.5mm</footprint>
+      <fields>
+        <field name="Footprint">BreathPet:TestPoint_Pad_D1.5mm</field>
+        <field name="Datasheet"/>
+        <field name="Description"/>
+      </fields>
+      <libsource lib="BreathPet" part="TP" description=""/>
+      <property name="Sheetname" value="carrier"/>
+      <property name="Sheetfile" value="carrier.kicad_sch"/>
+      <property name="exclude_from_bom"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>afb6d8bf-2004-539d-9a2c-fa798ba4acda</tstamps>
+      <units>
+        <unit name="A">
+          <pins>
+            <pin num="1"/>
+          </pins>
+        </unit>
+      </units>
+    </comp>
+    <comp ref="TP6">
+      <value>GND</value>
+      <footprint>BreathPet:TestPoint_Pad_D1.5mm</footprint>
+      <fields>
+        <field name="Footprint">BreathPet:TestPoint_Pad_D1.5mm</field>
+        <field name="Datasheet"/>
+        <field name="Description"/>
+      </fields>
+      <libsource lib="BreathPet" part="TP" description=""/>
+      <property name="Sheetname" value="carrier"/>
+      <property name="Sheetfile" value="carrier.kicad_sch"/>
+      <property name="exclude_from_bom"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>dfd5519f-ee17-56ea-87aa-872d92f52ea4</tstamps>
+      <units>
+        <unit name="A">
+          <pins>
+            <pin num="1"/>
+          </pins>
+        </unit>
+      </units>
+    </comp>
+    <comp ref="TP7">
+      <value>+5V_SENSOR</value>
+      <footprint>BreathPet:TestPoint_Pad_D1.5mm</footprint>
+      <fields>
+        <field name="Footprint">BreathPet:TestPoint_Pad_D1.5mm</field>
+        <field name="Datasheet"/>
+        <field name="Description"/>
+      </fields>
+      <libsource lib="BreathPet" part="TP" description=""/>
+      <property name="Sheetname" value="carrier"/>
+      <property name="Sheetfile" value="carrier.kicad_sch"/>
+      <property name="exclude_from_bom"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>84e1fa64-1903-5c6e-bbbd-35d5a25de903</tstamps>
+      <units>
+        <unit name="A">
+          <pins>
+            <pin num="1"/>
+          </pins>
+        </unit>
+      </units>
+    </comp>
+    <comp ref="TP8">
+      <value>MQ3_AO</value>
+      <footprint>BreathPet:TestPoint_Pad_D1.5mm</footprint>
+      <fields>
+        <field name="Footprint">BreathPet:TestPoint_Pad_D1.5mm</field>
+        <field name="Datasheet"/>
+        <field name="Description"/>
+      </fields>
+      <libsource lib="BreathPet" part="TP" description=""/>
+      <property name="Sheetname" value="carrier"/>
+      <property name="Sheetfile" value="carrier.kicad_sch"/>
+      <property name="exclude_from_bom"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamps>4bdf5636-2577-5dfd-b9c9-c38ef582c5cd</tstamps>
+      <units>
+        <unit name="A">
+          <pins>
+            <pin num="1"/>
+          </pins>
+        </unit>
+      </units>
+    </comp>
+  </components>
+  <libparts>
+    <libpart lib="BreathPet" part="C">
+      <fields>
+        <field name="Reference">X</field>
+        <field name="Value">C</field>
+        <field name="Footprint"/>
+        <field name="Datasheet"/>
+        <field name="Description"/>
+      </fields>
+      <pins>
+        <pin num="1" name="" type="passive"/>
+        <pin num="2" name="" type="passive"/>
+      </pins>
+    </libpart>
+    <libpart lib="BreathPet" part="CLAMP">
+      <fields>
+        <field name="Reference">X</field>
+        <field name="Value">CLAMP</field>
+        <field name="Footprint"/>
+        <field name="Datasheet"/>
+        <field name="Description"/>
+      </fields>
+      <pins>
+        <pin num="1" name="A1" type="passive"/>
+        <pin num="2" name="K2" type="passive"/>
+        <pin num="3" name="K1/A2" type="passive"/>
+      </pins>
+    </libpart>
+    <libpart lib="BreathPet" part="HOLE">
+      <fields>
+        <field name="Reference">X</field>
+        <field name="Value">HOLE</field>
+        <field name="Footprint"/>
+        <field name="Datasheet"/>
+        <field name="Description"/>
+      </fields>
+    </libpart>
+    <libpart lib="BreathPet" part="JP">
+      <fields>
+        <field name="Reference">X</field>
+        <field name="Value">JP</field>
+        <field name="Footprint"/>
+        <field name="Datasheet"/>
+        <field name="Description"/>
+      </fields>
+      <pins>
+        <pin num="1" name="" type="passive"/>
+        <pin num="2" name="" type="passive"/>
+      </pins>
+    </libpart>
+    <libpart lib="BreathPet" part="JST">
+      <fields>
+        <field name="Reference">X</field>
+        <field name="Value">JST</field>
+        <field name="Footprint"/>
+        <field name="Datasheet"/>
+        <field name="Description"/>
+      </fields>
+      <pins>
+        <pin num="1" name="5V" type="passive"/>
+        <pin num="2" name="GND" type="passive"/>
+        <pin num="3" name="AO" type="passive"/>
+      </pins>
+    </libpart>
+    <libpart lib="BreathPet" part="MQ3">
+      <fields>
+        <field name="Reference">X</field>
+        <field name="Value">MQ3</field>
+        <field name="Footprint"/>
+        <field name="Datasheet"/>
+        <field name="Description"/>
+      </fields>
+      <pins>
+        <pin num="1" name="A" type="passive"/>
+        <pin num="2" name="H" type="passive"/>
+        <pin num="3" name="A" type="passive"/>
+        <pin num="4" name="B" type="passive"/>
+        <pin num="5" name="H" type="passive"/>
+        <pin num="6" name="B" type="passive"/>
+      </pins>
+    </libpart>
+    <libpart lib="BreathPet" part="P1">
+      <fields>
+        <field name="Reference">X</field>
+        <field name="Value">P1</field>
+        <field name="Footprint"/>
+        <field name="Datasheet"/>
+        <field name="Description"/>
+      </fields>
+      <pins>
+        <pin num="1" name="3V3" type="passive"/>
+        <pin num="2" name="GND" type="passive"/>
+        <pin num="3" name="GND" type="passive"/>
+        <pin num="4" name="NC" type="passive"/>
+        <pin num="5" name="GPIO16" type="passive"/>
+        <pin num="6" name="GPIO21" type="passive"/>
+        <pin num="7" name="GPIO17" type="passive"/>
+        <pin num="8" name="GPIO18" type="passive"/>
+        <pin num="9" name="GPIO44" type="passive"/>
+        <pin num="10" name="GPIO43" type="passive"/>
+        <pin num="11" name="GND" type="passive"/>
+        <pin num="12" name="GND" type="passive"/>
+      </pins>
+    </libpart>
+    <libpart lib="BreathPet" part="P2">
+      <fields>
+        <field name="Reference">X</field>
+        <field name="Value">P2</field>
+        <field name="Footprint"/>
+        <field name="Datasheet"/>
+        <field name="Description"/>
+      </fields>
+      <pins>
+        <pin num="1" name="5V" type="passive"/>
+        <pin num="2" name="GND" type="passive"/>
+        <pin num="3" name="NC" type="passive"/>
+        <pin num="4" name="NC" type="passive"/>
+        <pin num="5" name="GPIO13" type="passive"/>
+        <pin num="6" name="GPIO12" type="passive"/>
+        <pin num="7" name="GPIO11" type="passive"/>
+        <pin num="8" name="GPIO10" type="passive"/>
+        <pin num="9" name="GPIO3" type="passive"/>
+        <pin num="10" name="GPIO2" type="passive"/>
+        <pin num="11" name="GPIO1" type="passive"/>
+        <pin num="12" name="3V3" type="passive"/>
+      </pins>
+    </libpart>
+    <libpart lib="BreathPet" part="R">
+      <fields>
+        <field name="Reference">X</field>
+        <field name="Value">R</field>
+        <field name="Footprint"/>
+        <field name="Datasheet"/>
+        <field name="Description"/>
+      </fields>
+      <pins>
+        <pin num="1" name="" type="passive"/>
+        <pin num="2" name="" type="passive"/>
+      </pins>
+    </libpart>
+    <libpart lib="BreathPet" part="RV">
+      <fields>
+        <field name="Reference">X</field>
+        <field name="Value">RV</field>
+        <field name="Footprint"/>
+        <field name="Datasheet"/>
+        <field name="Description"/>
+      </fields>
+      <pins>
+        <pin num="1" name="" type="passive"/>
+        <pin num="2" name="" type="passive"/>
+      </pins>
+    </libpart>
+    <libpart lib="BreathPet" part="TP">
+      <fields>
+        <field name="Reference">X</field>
+        <field name="Value">TP</field>
+        <field name="Footprint"/>
+        <field name="Datasheet"/>
+        <field name="Description"/>
+      </fields>
+      <pins>
+        <pin num="1" name="" type="passive"/>
+      </pins>
+    </libpart>
+  </libparts>
+  <libraries>
+    <library logical="BreathPet">
+      <uri>${KIPRJMOD}/lib/BreathPet.kicad_sym</uri>
+    </library>
+  </libraries>
+  <nets>
+    <net code="1" name="/+3V3" class="Default">
+      <node ref="D1" pin="2" pinfunction="K2_2" pintype="passive"/>
+      <node ref="J2" pin="12" pinfunction="3V3_12" pintype="passive"/>
+    </net>
+    <net code="2" name="/+5V_SENSOR" class="Default">
+      <node ref="C2" pin="1" pintype="passive"/>
+      <node ref="C3" pin="1" pintype="passive"/>
+      <node ref="J3" pin="1" pinfunction="5V_1" pintype="passive"/>
+      <node ref="JP1" pin="2" pintype="passive"/>
+      <node ref="S1" pin="1" pinfunction="A_1" pintype="passive"/>
+      <node ref="S1" pin="2" pinfunction="H_2" pintype="passive"/>
+      <node ref="S1" pin="3" pinfunction="A_3" pintype="passive"/>
+      <node ref="TP1" pin="1" pintype="passive"/>
+      <node ref="TP7" pin="1" pintype="passive"/>
+    </net>
+    <net code="3" name="/+5V_USB" class="Default">
+      <node ref="J2" pin="1" pinfunction="5V_1" pintype="passive"/>
+      <node ref="JP1" pin="1" pintype="passive"/>
+    </net>
+    <net code="4" name="/ADC_GPIO1" class="Default">
+      <node ref="C1" pin="1" pintype="passive"/>
+      <node ref="D1" pin="3" pinfunction="K1/A2_3" pintype="passive"/>
+      <node ref="J2" pin="11" pinfunction="GPIO1_11" pintype="passive"/>
+      <node ref="R3" pin="2" pintype="passive"/>
+      <node ref="TP3" pin="1" pintype="passive"/>
+      <node ref="TP5" pin="1" pintype="passive"/>
+    </net>
+    <net code="5" name="/DIV_HALF" class="Default">
+      <node ref="R1" pin="2" pintype="passive"/>
+      <node ref="R2" pin="1" pintype="passive"/>
+      <node ref="R3" pin="1" pintype="passive"/>
+    </net>
+    <net code="6" name="/GND" class="Default">
+      <node ref="C1" pin="2" pintype="passive"/>
+      <node ref="C2" pin="2" pintype="passive"/>
+      <node ref="C3" pin="2" pintype="passive"/>
+      <node ref="D1" pin="1" pinfunction="A1_1" pintype="passive"/>
+      <node ref="J2" pin="2" pinfunction="GND_2" pintype="passive"/>
+      <node ref="J3" pin="2" pinfunction="GND_2" pintype="passive"/>
+      <node ref="R2" pin="2" pintype="passive"/>
+      <node ref="R4" pin="2" pintype="passive"/>
+      <node ref="S1" pin="5" pinfunction="H_5" pintype="passive"/>
+      <node ref="TP4" pin="1" pintype="passive"/>
+      <node ref="TP6" pin="1" pintype="passive"/>
+    </net>
+    <net code="7" name="/MQ3_AO" class="Default">
+      <node ref="J3" pin="3" pinfunction="AO_3" pintype="passive"/>
+      <node ref="R1" pin="1" pintype="passive"/>
+      <node ref="R4" pin="1" pintype="passive"/>
+      <node ref="S1" pin="4" pinfunction="B_4" pintype="passive"/>
+      <node ref="S1" pin="6" pinfunction="B_6" pintype="passive"/>
+      <node ref="TP2" pin="1" pintype="passive"/>
+      <node ref="TP8" pin="1" pintype="passive"/>
+    </net>
+    <net code="8" name="unconnected-(J1-3V3-Pad1)" class="Default">
+      <node ref="J1" pin="1" pinfunction="3V3_1" pintype="passive+no_connect"/>
+    </net>
+    <net code="9" name="unconnected-(J1-GND-Pad2)" class="Default">
+      <node ref="J1" pin="2" pinfunction="GND_2" pintype="passive+no_connect"/>
+    </net>
+    <net code="10" name="unconnected-(J1-GND-Pad3)" class="Default">
+      <node ref="J1" pin="3" pinfunction="GND_3" pintype="passive+no_connect"/>
+    </net>
+    <net code="11" name="unconnected-(J1-GND-Pad11)" class="Default">
+      <node ref="J1" pin="11" pinfunction="GND_11" pintype="passive+no_connect"/>
+    </net>
+    <net code="12" name="unconnected-(J1-GND-Pad12)" class="Default">
+      <node ref="J1" pin="12" pinfunction="GND_12" pintype="passive+no_connect"/>
+    </net>
+    <net code="13" name="unconnected-(J1-GPIO16-Pad5)" class="Default">
+      <node ref="J1" pin="5" pinfunction="GPIO16_5" pintype="passive+no_connect"/>
+    </net>
+    <net code="14" name="unconnected-(J1-GPIO17-Pad7)" class="Default">
+      <node ref="J1" pin="7" pinfunction="GPIO17_7" pintype="passive+no_connect"/>
+    </net>
+    <net code="15" name="unconnected-(J1-GPIO18-Pad8)" class="Default">
+      <node ref="J1" pin="8" pinfunction="GPIO18_8" pintype="passive+no_connect"/>
+    </net>
+    <net code="16" name="unconnected-(J1-GPIO21-Pad6)" class="Default">
+      <node ref="J1" pin="6" pinfunction="GPIO21_6" pintype="passive+no_connect"/>
+    </net>
+    <net code="17" name="unconnected-(J1-GPIO43-Pad10)" class="Default">
+      <node ref="J1" pin="10" pinfunction="GPIO43_10" pintype="passive+no_connect"/>
+    </net>
+    <net code="18" name="unconnected-(J1-GPIO44-Pad9)" class="Default">
+      <node ref="J1" pin="9" pinfunction="GPIO44_9" pintype="passive+no_connect"/>
+    </net>
+    <net code="19" name="unconnected-(J1-NC-Pad4)" class="Default">
+      <node ref="J1" pin="4" pinfunction="NC_4" pintype="passive+no_connect"/>
+    </net>
+    <net code="20" name="unconnected-(J2-GPIO2-Pad10)" class="Default">
+      <node ref="J2" pin="10" pinfunction="GPIO2_10" pintype="passive+no_connect"/>
+    </net>
+    <net code="21" name="unconnected-(J2-GPIO3-Pad9)" class="Default">
+      <node ref="J2" pin="9" pinfunction="GPIO3_9" pintype="passive+no_connect"/>
+    </net>
+    <net code="22" name="unconnected-(J2-GPIO10-Pad8)" class="Default">
+      <node ref="J2" pin="8" pinfunction="GPIO10_8" pintype="passive+no_connect"/>
+    </net>
+    <net code="23" name="unconnected-(J2-GPIO11-Pad7)" class="Default">
+      <node ref="J2" pin="7" pinfunction="GPIO11_7" pintype="passive+no_connect"/>
+    </net>
+    <net code="24" name="unconnected-(J2-GPIO12-Pad6)" class="Default">
+      <node ref="J2" pin="6" pinfunction="GPIO12_6" pintype="passive+no_connect"/>
+    </net>
+    <net code="25" name="unconnected-(J2-GPIO13-Pad5)" class="Default">
+      <node ref="J2" pin="5" pinfunction="GPIO13_5" pintype="passive+no_connect"/>
+    </net>
+    <net code="26" name="unconnected-(J2-NC-Pad3)" class="Default">
+      <node ref="J2" pin="3" pinfunction="NC_3" pintype="passive+no_connect"/>
+    </net>
+    <net code="27" name="unconnected-(J2-NC-Pad4)" class="Default">
+      <node ref="J2" pin="4" pinfunction="NC_4" pintype="passive+no_connect"/>
+    </net>
+  </nets>
+</export>

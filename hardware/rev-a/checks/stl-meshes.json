@@ -1,0 +1,22 @@
+[
+  {
+    "file": "case-base.stl",
+    "bad_edges": 0,
+    "triangles": 3812
+  },
+  {
+    "file": "case-cover.stl",
+    "bad_edges": 0,
+    "triangles": 1812
+  },
+  {
+    "file": "header-fit-gauge.stl",
+    "bad_edges": 0,
+    "triangles": 8188
+  },
+  {
+    "file": "sensor-fit-gauge.stl",
+    "bad_edges": 0,
+    "triangles": 2376
+  }
+]

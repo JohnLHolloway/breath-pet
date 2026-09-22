@@ -1,0 +1,7 @@
+Comment,Designator,Footprint,LCSC Part #
+8.2k ohm 1% >=0.125W,"R1,R2",0805,
+1k ohm 1% >=0.125W,R3,0805,
+6.65k ohm 1% >=0.125W - verify sensor variant,R4,0805,
+100nF X7R 50V 10%,"C1,C3",0805,
+10uF X5R 16V minimum 10%,C2,0805,
+BAT54S dual series Schottky - A1 pin1 K2 pin2 common pin3,D1,SOT-23,

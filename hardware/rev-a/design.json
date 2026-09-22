@@ -1,0 +1,317 @@
+{
+  "revision": "A",
+  "size_mm": [
+    68,
+    70,
+    1.6
+  ],
+  "header_pitch_mm": 2.54,
+  "header_rows_mm": 22.86,
+  "header_first_x_mm": 28,
+  "header_y_mm": [
+    4.57,
+    27.43
+  ],
+  "mount_holes_mm": [
+    [
+      3,
+      3,
+      2.7
+    ],
+    [
+      3,
+      67,
+      2.7
+    ],
+    [
+      65,
+      67,
+      2.7
+    ]
+  ],
+  "sensor_center_mm": [
+    34,
+    56
+  ],
+  "sensor_pads_mm": {
+    "1": [
+      -3.36,
+      -3.36
+    ],
+    "2": [
+      -4.75,
+      0
+    ],
+    "3": [
+      -3.36,
+      3.36
+    ],
+    "4": [
+      3.36,
+      3.36
+    ],
+    "5": [
+      4.75,
+      0
+    ],
+    "6": [
+      3.36,
+      -3.36
+    ]
+  },
+  "components": [
+    {
+      "ref": "J1",
+      "value": "LILYGO P1 / upper row",
+      "footprint": "PinSocket_1x12_P2.54mm_Vertical",
+      "kind": "P1",
+      "nets": {},
+      "uuid": "1953719d-8fa7-5fe3-b05f-46237e1bb8ce"
+    },
+    {
+      "ref": "J2",
+      "value": "LILYGO P2 / lower row",
+      "footprint": "PinSocket_1x12_P2.54mm_Vertical",
+      "kind": "P2",
+      "nets": {
+        "1": "+5V_USB",
+        "2": "GND",
+        "11": "ADC_GPIO1",
+        "12": "+3V3"
+      },
+      "uuid": "022cc546-c89f-5d71-8e5c-ecf9a9f7a8df"
+    },
+    {
+      "ref": "JP1",
+      "value": "SENSOR POWER / fit shunt",
+      "footprint": "PinHeader_1x02_P2.54mm_Vertical",
+      "kind": "JP",
+      "nets": {
+        "1": "+5V_USB",
+        "2": "+5V_SENSOR"
+      },
+      "uuid": "fd2a838d-89b9-5ce0-b93c-19d5343f09eb"
+    },
+    {
+      "ref": "J3",
+      "value": "MQ3 cable / 5V GND AO",
+      "footprint": "JST_XH_B3B-XH-A_1x03_P2.50mm_Vertical",
+      "kind": "JST",
+      "nets": {
+        "1": "+5V_SENSOR",
+        "2": "GND",
+        "3": "MQ3_AO"
+      },
+      "uuid": "961ad45c-af20-551d-8a5c-193f5d635dda",
+      "dnp": true
+    },
+    {
+      "ref": "R1",
+      "value": "8.2k 1%",
+      "footprint": "R_0805_2012Metric",
+      "kind": "R",
+      "nets": {
+        "1": "MQ3_AO",
+        "2": "DIV_HALF"
+      },
+      "uuid": "ef9b6d99-5ee8-5898-bf30-0f751b7547f0"
+    },
+    {
+      "ref": "R2",
+      "value": "8.2k 1%",
+      "footprint": "R_0805_2012Metric",
+      "kind": "RV",
+      "nets": {
+        "1": "DIV_HALF",
+        "2": "GND"
+      },
+      "uuid": "8d4d022c-8bfc-50af-adcb-9d5709915c6a"
+    },
+    {
+      "ref": "R3",
+      "value": "1k 1%",
+      "footprint": "R_0805_2012Metric",
+      "kind": "R",
+      "nets": {
+        "1": "DIV_HALF",
+        "2": "ADC_GPIO1"
+      },
+      "uuid": "4944ed74-4268-5dda-b980-a20e81a24302"
+    },
+    {
+      "ref": "C1",
+      "value": "100nF X7R 50V",
+      "footprint": "C_0805_2012Metric",
+      "kind": "C",
+      "nets": {
+        "1": "ADC_GPIO1",
+        "2": "GND"
+      },
+      "uuid": "d081f2ad-0d48-5be4-b156-cd581d957a1b"
+    },
+    {
+      "ref": "C2",
+      "value": "10uF X5R 16V",
+      "footprint": "C_0805_2012Metric",
+      "kind": "C",
+      "nets": {
+        "1": "+5V_SENSOR",
+        "2": "GND"
+      },
+      "uuid": "34fea9f7-b302-5d91-9734-b6428e2ad12c"
+    },
+    {
+      "ref": "C3",
+      "value": "100nF X7R 50V",
+      "footprint": "C_0805_2012Metric",
+      "kind": "C",
+      "nets": {
+        "1": "+5V_SENSOR",
+        "2": "GND"
+      },
+      "uuid": "b18b43a4-577f-5335-80ad-7eaae8c9280a"
+    },
+    {
+      "ref": "D1",
+      "value": "BAT54S",
+      "footprint": "SOT-23",
+      "kind": "CLAMP",
+      "nets": {
+        "1": "GND",
+        "2": "+3V3",
+        "3": "ADC_GPIO1"
+      },
+      "uuid": "7ee3e3f9-79f3-53c3-aee0-494d7ceb226a"
+    },
+    {
+      "ref": "S1",
+      "value": "MQ-3 / verify can variant",
+      "footprint": "MQ3_Classic_9.5mm",
+      "kind": "MQ3",
+      "nets": {
+        "1": "+5V_SENSOR",
+        "2": "+5V_SENSOR",
+        "3": "+5V_SENSOR",
+        "4": "MQ3_AO",
+        "5": "GND",
+        "6": "MQ3_AO"
+      },
+      "uuid": "6d20ea41-68e2-540e-a63c-712979e945ca"
+    },
+    {
+      "ref": "R4",
+      "value": "6.65k 1% / see variant table",
+      "footprint": "R_0805_2012Metric",
+      "kind": "RV",
+      "nets": {
+        "1": "MQ3_AO",
+        "2": "GND"
+      },
+      "uuid": "afe76d31-b6af-52b5-838a-56b748cf3ff3"
+    },
+    {
+      "ref": "TP5",
+      "value": "ADC_GPIO1",
+      "footprint": "TestPoint_Pad_D1.5mm",
+      "kind": "TP",
+      "nets": {
+        "1": "ADC_GPIO1"
+      },
+      "uuid": "afb6d8bf-2004-539d-9a2c-fa798ba4acda"
+    },
+    {
+      "ref": "TP6",
+      "value": "GND",
+      "footprint": "TestPoint_Pad_D1.5mm",
+      "kind": "TP",
+      "nets": {
+        "1": "GND"
+      },
+      "uuid": "dfd5519f-ee17-56ea-87aa-872d92f52ea4"
+    },
+    {
+      "ref": "TP7",
+      "value": "+5V_SENSOR",
+      "footprint": "TestPoint_Pad_D1.5mm",
+      "kind": "TP",
+      "nets": {
+        "1": "+5V_SENSOR"
+      },
+      "uuid": "84e1fa64-1903-5c6e-bbbd-35d5a25de903"
+    },
+    {
+      "ref": "TP8",
+      "value": "MQ3_AO",
+      "footprint": "TestPoint_Pad_D1.5mm",
+      "kind": "TP",
+      "nets": {
+        "1": "MQ3_AO"
+      },
+      "uuid": "4bdf5636-2577-5dfd-b9c9-c38ef582c5cd"
+    },
+    {
+      "ref": "TP1",
+      "value": "+5V_SENSOR",
+      "footprint": "TestPoint_Pad_D1.5mm",
+      "kind": "TP",
+      "nets": {
+        "1": "+5V_SENSOR"
+      },
+      "uuid": "e43e2b58-ba20-5206-a687-404c4044e57a"
+    },
+    {
+      "ref": "TP2",
+      "value": "MQ3_AO",
+      "footprint": "TestPoint_Pad_D1.5mm",
+      "kind": "TP",
+      "nets": {
+        "1": "MQ3_AO"
+      },
+      "uuid": "d4225da6-3eec-5929-99e8-5c4e2b6414f0"
+    },
+    {
+      "ref": "TP3",
+      "value": "ADC_GPIO1",
+      "footprint": "TestPoint_Pad_D1.5mm",
+      "kind": "TP",
+      "nets": {
+        "1": "ADC_GPIO1"
+      },
+      "uuid": "33cce59c-6e8a-5ad0-ac73-13b813084d7d"
+    },
+    {
+      "ref": "TP4",
+      "value": "GND",
+      "footprint": "TestPoint_Pad_D1.5mm",
+      "kind": "TP",
+      "nets": {
+        "1": "GND"
+      },
+      "uuid": "fa045deb-0b9d-553d-9396-52372013acb8"
+    },
+    {
+      "ref": "H1",
+      "value": "M2.5 / NPTH",
+      "footprint": "MountingHole_2.7mm_M2.5",
+      "kind": "HOLE",
+      "nets": {},
+      "uuid": "57dcf9dc-51fc-5134-bdec-a299c8d7e7bd"
+    },
+    {
+      "ref": "H2",
+      "value": "M2.5 / NPTH",
+      "footprint": "MountingHole_2.7mm_M2.5",
+      "kind": "HOLE",
+      "nets": {},
+      "uuid": "ec9ab6c6-0631-52d3-973f-beaa7ad4a13e"
+    },
+    {
+      "ref": "H3",
+      "value": "M2.5 / NPTH",
+      "footprint": "MountingHole_2.7mm_M2.5",
+      "kind": "HOLE",
+      "nets": {},
+      "uuid": "e0add9b7-6ec6-53d3-8149-ade1853c051f"
+    }
+  ]
+}
