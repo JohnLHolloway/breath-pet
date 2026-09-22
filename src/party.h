@@ -50,21 +50,11 @@ inline int gameScore(int raw,int zero,int span) { return constrain((raw-zero)*10
 inline int sensorScore(int baseline,int peak,int span) { return peak<MQ3_RESPONSE_MIN_MV?0:constrain(max(0,peak-baseline-20)*100/max(100,span),0,100); }
 inline int feedPlayer(Player &p,int score) {
   int previous=p.health;
-  if (score>=70) {
-    p.health=max(0,int(p.health)-(10+(score-70)/2));
-    p.joy=max(0,int(p.joy)-12); p.food=min(100,int(p.food)+3);
-  } else {
-    p.food=min(100,int(p.food)+(score==0?8:15));
-    p.joy=min(100,int(p.joy)+(score==0?6:12));
-  }
+  p.food=min(100,int(p.food)+15); p.joy=min(100,int(p.joy)+12);
   p.lastScore=score; ++p.feeds; return int(p.health)-previous;
 }
 inline const char *mood(const Player &p) {
-  if (!p.health) return "WIPED OUT";
-  if (p.health<35) return "NEEDS REST";
-  if (p.lastScore>=70) return "OVERLOADED";
-  if (p.food<25) return "HUNGRY";
-  return "HAPPY";
+  return p.lastScore>=70?"WILD":p.lastScore>=25?"PARTY":"CHILL";
 }
 
 class PartyStorage {
@@ -103,7 +93,11 @@ public:
     ready=prefs.begin(BREATH_PET_TEST_MODE?"breath-test":"breath-pet",false); if (!ready) return false;
     static PartyData loaded;
     if (prefs.getBytesLength("party-v2")==sizeof(loaded) &&
-        prefs.getBytes("party-v2",&loaded,sizeof(loaded))==sizeof(loaded) && valid(loaded)) data=loaded;
+        prefs.getBytes("party-v2",&loaded,sizeof(loaded))==sizeof(loaded) && valid(loaded)) {
+      data=loaded;
+      // The verified v2 record supersedes this old key; reclaim scarce NVS space.
+      prefs.remove("party-v1");
+    }
     else if (!prefs.getBytesLength("party-v2")) {
       static LegacyPartyData old;
       if (prefs.getBytesLength("party-v1")==sizeof(old) && prefs.getBytes("party-v1",&old,sizeof(old))==sizeof(old) && old.version==1) {
@@ -144,7 +138,7 @@ public:
   void tick() {
     for (auto &p:data.players) if (p.active) {
       p.food=max(0,int(p.food)-1); p.joy=max(0,int(p.joy)-1);
-      if (!p.food) p.health=max(0,int(p.health)-1);
+      // No neglect damage: attention is represented by the sleep/energy system.
     }
     if (count()) save();
   }

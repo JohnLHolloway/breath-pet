@@ -6,11 +6,13 @@
 #include <ModulesCSTMutual.tpp>
 #include "party.h"
 #include "mq3.h"
+#include "fun.h"
 
 constexpr int POWER_PIN=15,BACKLIGHT_PIN=38;
 TFT_eSPI lcd;
 TFT_eSprite frame(&lcd);
 PartyStorage storage;
+FunStorage fun;
 Mq3Monitor mq3;
 SensorFeed sensorFeed;
 bool inputLive=!BREATH_PET_TEST_MODE;
@@ -24,14 +26,24 @@ uint32_t frames=0,touchTaps=0,carePresses=0,samplePresses=0;
 uint32_t lastTick=0,lastFrame=0,lastStatus=0,samplingStart=0;
 uint32_t fedAt[MAX_PLAYERS]={},restedAt[MAX_PLAYERS]={};
 bool fed[MAX_PLAYERS]={},rested[MAX_PLAYERS]={};
-enum Page {TANK,NAME_PICK,PET_PICK,PET,FEED,SAMPLING,RESULT,HISTORY,MENU,CALIBRATION,NEW_NIGHT,SENSOR};
-const char *const PAGE_NAMES[]={"tank","name","choose_pet","pet","feed","sampling","result","history","menu","calibration","new_night","sensor"};
+enum Page {TANK,NAME_PICK,PET_PICK,PET,FEED,SAMPLING,RESULT,HISTORY,MENU,CALIBRATION,NEW_NIGHT,SENSOR,WARDROBE,PLAY,AWARDS,DECOR,COUNTDOWN};
+const char *const PAGE_NAMES[]={"tank","name","choose_pet","pet","feed","sampling","result","history","menu","calibration","new_night","sensor","wardrobe","play","awards","decor","countdown"};
 Page page=TANK;
 int cursor=6,selected=-1,joiningSlot=-1,nameIndex=0,petIndex=0,historyPage=0;
 int demoIndex=1,lastRaw=0,resultDelta=0;
 const int DEMO_VALUES[]={0,25,50,85};
 const char *notice="";
 uint32_t noticeAt=0;
+int catches=0;
+#if BREATH_PET_TEST_MODE
+int bubbleOverride=-1;
+#endif
+int bubblePosition(uint32_t now) {
+#if BREATH_PET_TEST_MODE
+  if(bubbleOverride>=0) return bubbleOverride;
+#endif
+  int p=(now/18)%200; return p<=100?p:200-p;
+}
 
 void status(bool waitForSpace=false);
 void message(const char *text);
@@ -41,10 +53,11 @@ void tap(int x,int y);
 bool hasPlayer() { return selected>=0 && selected<MAX_PLAYERS && storage.data.players[selected].active; }
 Player &player() { return storage.data.players[selected]; }
 void show(Page next) {
-  if(page==SAMPLING && next!=SAMPLING) sensorFeed.cancel();
+  if((page==SAMPLING || page==COUNTDOWN) && next!=SAMPLING && next!=COUNTDOWN) sensorFeed.cancel();
   if ((next==SENSOR && page!=SENSOR) || (next==FEED && inputLive && page!=FEED)) mq3.begin(millis());
-  if (next!=SENSOR && !(inputLive && (next==FEED || next==SAMPLING))) mq3.active=false;
+  if (next!=SENSOR && !(inputLive && (next==FEED || next==SAMPLING || next==COUNTDOWN))) mq3.active=false;
   page=next; cursor=0; notice="";
+  if(next==PLAY) catches=0;
   if (next==TANK) {
     cursor=6;
     for (int i=0;i<MAX_PLAYERS;i++) if (storage.data.players[i].active) { cursor=i; break; }
@@ -66,31 +79,33 @@ uint32_t cooldown(int slot) {
   return elapsed<FEED_COOLDOWN_MS?FEED_COOLDOWN_MS-elapsed:0;
 }
 void newNight() {
-  storage.newNight(); selected=-1; joiningSlot=-1;
+  storage.newNight(); fun.sync(storage.data); selected=-1; joiningSlot=-1;
   memset(fed,0,sizeof(fed)); memset(rested,0,sizeof(rested));
   lastTick=millis(); show(TANK);
 }
 bool capture(int raw) {
   if (inputLive || !hasPlayer() || raw<0 || raw>100 || cooldown(selected)) return false;
   lastRaw=raw; resultDelta=storage.record(selected,raw,millis());
+  fun.wake(selected,player().lastScore,millis(),esp_random());
   fed[selected]=true; fedAt[selected]=millis(); show(RESULT); return true;
 }
 void beginFeed() {
   if (!hasPlayer()) return;
   if (cooldown(selected)) { message("PET IS FULL. WAIT A MOMENT."); return; }
   if(inputLive && !sensorFeed.start(mq3,millis())) { message("KEEP CUP AWAY; WAIT FOR CLEAN AIR"); return; }
-  samplingStart=millis(); show(SAMPLING);
+  samplingStart=millis(); show(COUNTDOWN);
 }
 void finishLiveFeed() {
   if(!sensorFeed.valid()) { show(FEED); message("NO READING SAVED: CHECK SIGNAL"); return; }
   int raw=sensorScore(sensorFeed.baseline,sensorFeed.peak,storage.data.sensorSpanMv);
   resultDelta=storage.record(selected,raw,millis(),1,sensorFeed.baseline,sensorFeed.peak);
+  fun.wake(selected,player().lastScore,millis(),esp_random());
   fed[selected]=true; fedAt[selected]=millis(); show(RESULT);
 }
 void restPet() {
   if (!hasPlayer()) return;
   if (rested[selected] && millis()-restedAt[selected]<10000) { message("RESTING... TRY AGAIN SOON."); return; }
-  storage.rest(selected); rested[selected]=true; restedAt[selected]=millis(); message("A LITTLE REST: +8 HEALTH");
+  storage.rest(selected); rested[selected]=true; restedAt[selected]=millis(); fun.nap(selected); message("NAP TIME / PLAY OR FEED TO WAKE");
 }
 void calibrate(int action) {
   if(inputLive) {
@@ -121,7 +136,7 @@ void selectSlot(int slot) {
 void back() {
   if (page==NAME_PICK || page==PET || page==MENU || page==NEW_NIGHT) show(TANK);
   else if (page==PET_PICK) show(NAME_PICK);
-  else if (page==CALIBRATION || page==SENSOR) show(MENU);
+  else if (page==CALIBRATION || page==SENSOR || page==AWARDS || page==DECOR) show(MENU);
   else if (page==TANK) show(MENU);
   else if (hasPlayer()) show(PET);
   else show(TANK);
@@ -132,15 +147,19 @@ void next() {
     case TANK: do { cursor=(cursor+1)%8; } while (!tankTarget(cursor)); break;
     case NAME_PICK: nextName(); break;
     case PET_PICK: petIndex=(petIndex+1)%PET_TYPES; break;
-    case PET: cursor=(cursor+1)%3; break;
+    case PET: cursor=(cursor+1)%5; break;
     case FEED: if(!inputLive) demoIndex=(demoIndex+1)%4; break;
     case RESULT: cursor=1-cursor; break;
     case HISTORY: historyPage=(historyPage+1)%max(1,(int(player().count)+2)/3); break;
-    case MENU: cursor=(cursor+1)%5; break;
+    case MENU: cursor=(cursor+1)%7; break;
     case SENSOR: cursor=(cursor+1)%3; break;
     case CALIBRATION: cursor=(cursor+1)%4; break;
     case NEW_NIGHT: cursor=1-cursor; break;
-    case SAMPLING: break;
+    case WARDROBE: cursor=(cursor+1)%4; break;
+    case PLAY: cursor=1-cursor; break;
+    case AWARDS: cursor=(cursor+1)%3; break;
+    case DECOR: cursor=(cursor+1)%3; break;
+    case COUNTDOWN: case SAMPLING: break;
   }
 }
 void activate() {
@@ -150,19 +169,23 @@ void activate() {
     case NAME_PICK: show(PET_PICK); break;
     case PET_PICK: {
       int slot=storage.join(PICKER_NAMES[nameIndex],petIndex,joiningSlot);
-      if (slot>=0) { selected=slot; show(PET); } else message("NAME TAKEN OR TANK FULL");
+      if (slot>=0) { fun.sync(storage.data); selected=slot; show(PET); } else message("NAME TAKEN OR TANK FULL");
       break;
     }
     case PET:
       if (cursor==0) show(FEED);
       else if (cursor==1) { historyPage=0; show(HISTORY); }
-      else restPet();
+      else if(cursor==2) restPet();
+      else if(cursor==3) show(WARDROBE);
+      else show(PLAY);
       break;
     case FEED: beginFeed(); break;
     case RESULT: show(cursor==0?TANK:PET); break;
     case HISTORY: show(PET); break;
     case MENU:
       if (cursor==0) show(TANK); else if (cursor==1) show(CALIBRATION); else if (cursor==2) show(NEW_NIGHT); else if(cursor==3) show(SENSOR);
+      else if(cursor==5) show(AWARDS);
+      else if(cursor==6) show(DECOR);
       else { inputLive=!inputLive; message(inputLive?"LIVE MQ-3 FEEDING ENABLED":"DEMO FEEDING ENABLED"); }
       break;
     case SENSOR:
@@ -173,14 +196,31 @@ void activate() {
       break;
     case CALIBRATION: calibrate(cursor); break;
     case NEW_NIGHT: if (cursor==1) newNight(); else show(MENU); break;
-    case SAMPLING: break;
+    case WARDROBE: if(cursor==3) show(PET); else fun.dress(selected,cursor); break;
+    case PLAY:
+      if(cursor) { show(PET); break; }
+      if(abs(bubblePosition(millis())-50)<=18) {
+        if(++catches>=3) { fun.play(selected,millis(),esp_random()); show(PET); message("THREE CATCHES / HELLO AGAIN!"); }
+        else message("POP! CATCH THE NEXT ONE");
+      } else message("MISSED / TRY AGAIN");
+      break;
+    case AWARDS: case DECOR: show(MENU); break;
+    case COUNTDOWN: case SAMPLING: break;
   }
 }
 
 void swimPosition(int slot,uint32_t now,int &x,int &y) {
-  float phase=fmodf(now/70.0f+slot*71.0f,408.0f);
+  const auto &f=fun.data.pets[slot];
+  if(f.idle>=20) { x=80+slot*39; y=116; return; }
+  float speed=f.idle>=10?130.0f:f.vibe>=70?29.0f:f.vibe>=25?48.0f:70.0f;
+  float phase=fmodf(now/speed+slot*71.0f,408.0f);
   x=82+int(phase<=204?phase:408-phase);
-  y=65+(slot%2)*47+int(sinf(now/1300.0f+slot*1.8f)*7);
+  y=70+(slot%2)*35+int(sinf(now/(f.vibe>=70?220.0f:1300.0f)+slot*1.8f)*(f.vibe>=70?10:7));
+  // Shared, short scenes gather awake pets without confining them to boxes.
+  if(now%24000<4500) {
+    if(f.personality==3) { x=92+int((now%4500)/27); y=78; }
+    else { x=75+slot*37+int(sinf(now/330.0f+slot)*9); y=94; }
+  }
 }
 void tap(int x,int y) {
   if (x<0 || x>=320 || y<0 || y>=170) return;
@@ -195,7 +235,7 @@ void tap(int x,int y) {
       }
       if (closest>=0) selectSlot(closest);
     }
-  } else if (page!=SAMPLING) next();
+  } else if (page!=SAMPLING && page!=COUNTDOWN) next();
   status();
 }
 
@@ -207,8 +247,8 @@ void status(bool waitForSpace) {
     if(!waitForSpace || millis()-started>=500) return;
     delay(1);
   }
-  char record[1536];
-  size_t length=snprintf(record,sizeof(record),"{\"app\":\"breath-pet\",\"version\":5,\"sensor\":\"%s\",\"page\":\"%s\",\"cursor\":%d,\"selected\":%d,\"players\":%d,\"night\":%lu,\"boot\":%lu,\"zero\":%u,\"span\":%u,\"display\":%s,\"psram\":%u,\"frames\":%lu,\"uptime_ms\":%lu,\"touch\":\"%s\",\"touch_taps\":%lu,\"care_presses\":%lu,\"sample_presses\":%lu,\"storage_ok\":%s,\"demo_raw\":%d,\"picker_name\":\"%s\",\"picker_pet\":%d,\"cooldown_ms\":%lu",
+  char record[2048];
+  size_t length=snprintf(record,sizeof(record),"{\"app\":\"breath-pet\",\"version\":6,\"sensor\":\"%s\",\"page\":\"%s\",\"cursor\":%d,\"selected\":%d,\"players\":%d,\"night\":%lu,\"boot\":%lu,\"zero\":%u,\"span\":%u,\"display\":%s,\"psram\":%u,\"frames\":%lu,\"uptime_ms\":%lu,\"touch\":\"%s\",\"touch_taps\":%lu,\"care_presses\":%lu,\"sample_presses\":%lu,\"storage_ok\":%s,\"demo_raw\":%d,\"picker_name\":\"%s\",\"picker_pet\":%d,\"cooldown_ms\":%lu",
     inputLive?"MQ3":"SIMULATED",PAGE_NAMES[page],cursor,selected,storage.count(),(unsigned long)storage.data.night,
     (unsigned long)storage.data.boot,storage.data.zero,storage.data.span,displayReady?"true":"false",
     ESP.getPsramSize(),(unsigned long)frames,(unsigned long)millis(),touchName,(unsigned long)touchTaps,
@@ -217,6 +257,12 @@ void status(bool waitForSpace) {
   if (hasPlayer()) length+=snprintf(record+length,sizeof(record)-length,",\"name\":\"%s\",\"pet_type\":%u,\"health\":%u,\"food\":%u,\"joy\":%u,\"score\":%u,\"feeds\":%lu,\"history_count\":%u,\"mood\":\"%s\"",
     player().name,player().type,player().health,player().food,player().joy,player().lastScore,
     (unsigned long)player().feeds,player().count,mood(player()));
+  if(hasPlayer()) {
+    const auto &f=fun.data.pets[selected]; const auto *c=fun.collection(player().name,false);
+    length+=snprintf(record+length,sizeof(record)-length,",\"energy\":%d,\"state\":\"%s\",\"idle_minutes\":%u,\"checkins\":%u,\"naps\":%u,\"games\":%u,\"encounters\":%u,\"hat\":%u,\"item\":%u,\"colour\":%u,\"hats\":%u,\"items\":%u,\"colours\":%u,\"visits\":%u,\"reward_ready\":%s,\"loot\":%d",
+      fun.energy(selected),fun.state(selected),f.idle,f.checkins,f.naps,f.games,f.encounters,c?c->hat:0,c?c->item:0,c?c->colour:0,c?c->hats:1,c?c->items:1,c?c->colours:1,c?c->visits:0,fun.rewardReady(selected)?"true":"false",fun.lastLoot);
+  }
+  length+=snprintf(record+length,sizeof(record)-length,",\"fun_storage_ok\":%s,\"upgrades\":%u,\"catches\":%d",fun.lastWriteOK?"true":"false",fun.data.upgrades,catches);
   length+=snprintf(record+length,sizeof(record)-length,",\"test_mode\":%s,\"mq3_active\":%s,\"mq3_mv\":%d,\"mq3_adc\":%d,\"mq3_samples\":%lu,\"mq3_spread_mv\":%d,\"mq3_can_zero\":%s,\"mq3_baseline_mv\":%d",
     BREATH_PET_TEST_MODE?"true":"false",mq3.active?"true":"false",mq3.millivolts,mq3.raw,(unsigned long)mq3.samples,mq3.spread(),mq3.canZero()?"true":"false",mq3.hasBaseline?mq3.baseline:-1);
   length+=snprintf(record+length,sizeof(record)-length,",\"feed_ready\":%s,\"feed_baseline_mv\":%d,\"feed_peak_mv\":%d,\"sensor_span_mv\":%u,\"recovering\":%s,\"request_id\":%lu}\n",
@@ -243,12 +289,12 @@ void historyStatus() {
 }
 void selfTest() {
   Player p; bool ok=true;
-  feedPlayer(p,0); ok &= p.food==78 && p.health==100;
+  feedPlayer(p,0); ok &= p.food==85 && p.health==100;
   p=Player(); feedPlayer(p,25); Player q; feedPlayer(q,69);
   ok &= p.food==q.food && p.joy==q.joy;
-  feedPlayer(p,85); ok &= p.health==83;
+  feedPlayer(p,85); ok &= p.health==100;
   for (int i=0;i<30;i++) feedPlayer(p,100);
-  ok &= p.health==0 && p.joy==0 && p.food==100;
+  ok &= p.health==100 && p.joy==100 && p.food==100;
   ok &= gameScore(20,45,100)==0 && gameScore(85,45,25)==100;
   static const PartyData freshParty;
   static const LegacyPartyData freshLegacy;
@@ -279,7 +325,7 @@ void selfTest() {
   ok &= !trial.start(bench,1000); bench.ingest(100,100);
   ok &= trial.start(bench,1000);
   for(int i=0;i<100;i++) trial.accept(400);
-  ok &= trial.valid() && !trial.done(12999) && trial.done(13000) && trial.peak==400;
+  ok &= trial.valid() && !trial.done(10999) && trial.done(11000) && trial.peak==400;
   ok &= sensorScore(100,399,1200)==0 && sensorScore(100,400,1200)==23 && sensorScore(139,852,1200)==57 && sensorScore(139,999,1200)==70 && sensorScore(100,2700,1200)==100;
   trial.cancel(); for(int i=0;i<100;i++) bench.ingest(400,400);
   ok &= !trial.ready(bench); for(int i=0;i<100;i++) bench.ingest(110,110);
@@ -339,6 +385,9 @@ void command(const String &cmd) {
     Serial.printf("TOUCHSCAN %s\n",touchName); return;
   }
 #if BREATH_PET_TEST_MODE
+  if(numberAfter(cmd,"test minutes ",value) && value<=60) { for(int i=0;i<value;i++) fun.tick(); lastTick=millis(); status(true); return; }
+  if(numberAfter(cmd,"test bubble ",value) && value<=100) { bubbleOverride=value; status(true); return; }
+  if(cmd=="test fun reset") { static const FunData fresh; fun.data=fresh; fun.sync(storage.data); fun.save(); status(true); return; }
   if(numberAfter(cmd,"test sensor ",value) && value<=999) { mq3.injectedMv=value; status(true); return; }
   if(cmd=="test sensor high") { mq3.injectedMv=2900; status(true); return; }
   if(cmd=="test sensor off") { mq3.injectedMv=-1; status(true); return; }
@@ -362,7 +411,7 @@ void command(const String &cmd) {
     if (kind.length()!=1 || kind[0]<'0' || kind[0]>'5') { Serial.println("ERROR join NAME 0..5"); return; }
     int slot=storage.join(name.c_str(),kind[0]-'0');
     if (slot<0) { Serial.println("ERROR invalid/duplicate name or full tank"); return; }
-    selected=slot; show(PET);
+    fun.sync(storage.data); selected=slot; show(PET);
   }
   else if (numberAfter(cmd,"select ",value) && value<MAX_PLAYERS && storage.data.players[value].active) { selected=value; show(PET); }
   else if (numberAfter(cmd,"sample ",value) && value<=100) {
@@ -392,7 +441,7 @@ void setup() {
     for (int i=0;i<(c.len&0x7F);i++) lcd.writedata(c.data[i]);
     if (c.len&0x80) delay(120);
   }
-  lcd.setRotation(3); storage.begin(); show(TANK); initTouch();
+  lcd.setRotation(3); storage.begin(); fun.begin(storage.data); show(TANK); initTouch();
   pinMode(BACKLIGHT_PIN,OUTPUT); digitalWrite(BACKLIGHT_PIN,HIGH);
   frame.setColorDepth(16); displayReady=frame.createSprite(320,170)!=nullptr;
   if (!displayReady) { lcd.fillScreen(TFT_BLACK); lcd.setTextColor(TFT_RED); lcd.drawString("Framebuffer error",10,20,2); }
@@ -430,11 +479,14 @@ void loop() {
   }
   now=millis(); // Commands may reset timers or take time (e.g. screenshot).
   bool sampled=mq3.poll(now);
+  if(page==COUNTDOWN && now-samplingStart>=5000) {
+    samplingStart=now; sensorFeed.started=now; show(SAMPLING);
+  }
   if(page==SAMPLING && inputLive) {
     if(sampled) sensorFeed.accept(mq3.millivolts);
     if(sensorFeed.invalid || sensorFeed.done(now)) finishLiveFeed();
-  } else if (page==SAMPLING && now-samplingStart>=3000) capture(DEMO_VALUES[demoIndex]);
-  if (now-lastTick>=60000) { lastTick=now; storage.tick(); }
+  } else if (page==SAMPLING && now-samplingStart>=10000) capture(DEMO_VALUES[demoIndex]);
+  if (now-lastTick>=60000) { lastTick+=60000; storage.tick(); fun.tick(); }
   if (displayReady && now-lastFrame>=80) { lastFrame=now; draw(now); }
   if (now-lastStatus>=5000) { lastStatus=now; status(); }
   delay(2);

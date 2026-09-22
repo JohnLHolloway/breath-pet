@@ -64,7 +64,7 @@ struct Mq3Monitor {
 };
 
 struct SensorFeed {
-  static constexpr uint32_t DURATION=12000;
+  static constexpr uint32_t DURATION=10000;
   bool running=false,invalid=false,needsRecovery=false;
   int baseline=0,peak=0,samples=0;
   uint32_t started=0;

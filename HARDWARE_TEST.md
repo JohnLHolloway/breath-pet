@@ -1,39 +1,39 @@
 # Hardware verification - 2026-09-22
 
-Tested on a USB-connected LILYGO T-Display-S3: ESP32-S3 revision 0.2, 16MB flash and approximately 8MB PSRAM. Normal firmware version 5 compiled, flashed with hash verification, and booted successfully.
+Firmware version 6 was built and flashed to the LILYGO T-Display-S3, ESP32-S3 revision 0.2, 16MB flash and 8MB PSRAM. Flash hashes verified. Normal firmware boots successfully with both game and collection saves healthy.
 
-## Controls and display
+## Validation
 
-With USB on the left, GPIO0 (upper front button) cycles NEXT and holds for Back; GPIO14 (lower) confirms OK and holds for Menu. Every selectable page uses the same gold action bar and position counter. The tank animates freely swimming pets and labels only the selected pet. The user previously confirmed the physical panel and both buttons work; latest layouts were reviewed through exported framebuffers, not physical panel readback.
+The isolated device suite passed **95 checks**. Coverage includes adoption and nickname ownership, six-pet capacity, persistent history/calibration, malformed commands, animation, menu navigation, clean-air readiness and sensor rejection. The new party checks cover:
 
-Framebuffer review covers the tank, adoption, care, menus, calibration, history and confirmation pages, plus the new live-feed preparation, timed sampling, result and mixed-source history screens. New captures in `docs/screenshots/` use fictional isolated test data and are labeled TEST.
+- A five-second countdown followed by a ten-second sampling window; early exposure does not contribute to the peak.
+- Real-source history metadata, cancelled attempts, invalid voltage and isolation between owners.
+- No damage from high scores; zero-response check-ins also wake pets.
+- Awake/drowsy/asleep boundaries at 10 and 20 powered minutes.
+- Mini-game misses, three-catch wins, wakeup without a history entry, and the ten-minute loot cooldown.
+- First cup, third-check-in hat, independent wardrobe controls and shared decorations.
+- Awards and upgrades navigation, saved clothing/progress across restart, returning-name colour unlock and new-evening behavior.
 
-No touch controller responded after reset or a full I2C scan. The supplied listing depicts the standard board without advertised touch; evidence points to the non-touch variant.
+Tests use separate game and collection namespaces (`breath-test`, `fun-test`). Test-only ADC injection, accelerated time and bubble-position commands are absent from normal firmware. The normal build explicitly rejected time/bubble test commands. `dev.ps1 test` restores normal firmware even after failure.
 
-## Automated and persistence checks
+Subsequent changes were limited to screen layout, status labels and hiding diagnostic values in gameplay. These were compiled and checked using actual exported ESP32 framebuffers. The final normal self-test passed, both save areas reported success, and all five existing user history entries matched the pre-update snapshot exactly. No synthetic readings were written to normal history.
 
-The isolated device suite passed **71 checks**. It covers adoption, taken-name skipping, six-player capacity, timed feeding, cooldowns, owner isolation, overload/recovery, persistent history/calibration, malformed input, animation, menus, confirmation and ADC bench behavior. Live-feeding checks use synthetic ADC injection compiled only into the test build: fresh baseline gating, timed peak capture, source and voltage metadata, cancellation, voltage rejection, recovery shared across owners, and persistence after restart. Normal firmware rejects the injection command.
+## Display and controls
 
-The on-device self-test also passed on normal firmware, including legacy schema migration, stat bounds, score limits, timing, recovery guards and history rollover. Actual legacy saved data migrated successfully: the existing pet's name, type, stats, feed count and all original history fields were preserved; the old reading gained an explicit DEMO label. Normal data was never cleared. A subsequent firmware update preserved that migrated history again.
+Upper front GPIO0 cycles NEXT (hold Back); lower GPIO14 confirms OK (hold Menu), with USB on the left. Every selectable page shares the gold action bar. The user previously confirmed the physical panel and buttons work; current layout QA uses rendered framebuffers, not physical panel readback.
 
-After the suite, a small serial-calibration mapping correction was verified directly on normal firmware: minus changed 600 to 500 mV; plus restored 600; default restored 600 after another decrement; manual zero was rejected without changing settings. The normal self-test was repeated successfully. These scoped checks preceded the revised 71-check suite.
+The latest captures in `docs/screenshots/party-*.png` use fictional test pets. They cover tank states, sleeping pets, wardrobe, outfit detail with one energy bar, bubble catch, awards, countdown, BLOW meter, results and history. Sleeping tank labels use compact Zzz; the selected pet's full name/state stays in the bottom bar. Older live-* captures document the earlier version.
 
-Tests use the separate `breath-test` NVS namespace. The test script checks `test_mode` before clearing its data, and `dev.ps1 test` restores normal firmware in a `finally` block. USB replies are transmitted in bounded chunks; clients accumulate partial lines and correlate request IDs. Missing replies are recovered only by read-only queries, never by replaying a feeding action. The successful 69-check run needed no read-only reply recovery.
+No touch controller responded to probing or a full I2C scan. The listing depicts the standard board without advertised touch; the UI remains fully button-operable.
 
-## Physical sensor evidence and remaining check
+## Persistence fix
 
-The MQ-3 is connected to GPIO1 through the planned 8 kohm/8 kohm divider made from eight 2 kohm resistors, with 5 V power and common ground. The user did not perform the requested multimeter check, so divider wiring and voltage are not independently verified.
+Adding collections initially exposed insufficient free space in the board's 20KB NVS partition. After validating an existing party-v2 record, startup now removes only that namespace's obsolete party-v1 key. This reclaims migrated data without clearing current pets, history or settings. Normal and isolated test saves then passed, including clothing persistence and restart tests. Collections are stored separately under `pet-fun` on normal firmware. Up to 32 nickname collections and shared tank upgrades survive new evenings.
 
-A real cup-vapor bench test observed approximately 107 mV in clean air, 414 mV after exposure to 25% sake, and 106 mV after removal. The user confirmed exposure and return to clean air. This establishes qualitative response and recovery, not alcohol concentration or BAC calibration.
+## Physical sensor evidence and limits
 
-Normal firmware now feeds from the real ADC. Its clean-air preparation was verified around 112-114 mV with a quiet window and readiness enabled. Two user-started physical cup feeds were saved: baseline 139 mV / peak 852 mV, and baseline 153 mV / peak 804 mV. Both used the former 600 mV span and scored 100. This verifies the physical cup-to-pet path. The user reported excessive overload, prompting the revision below.
+The MQ-3 uses GPIO1 and the planned eight-resistor 8 kohm/8 kohm divider, 5 V power and common ground. The user did not perform the requested multimeter check; physical divider voltage has not been independently verified.
 
-Each live feeding freezes a fresh clean-air baseline, observes 12 seconds of peak voltage, stores MQ3 provenance and the original baseline/peak/span, and then requires recovery before another feeding. The bench monitor remains separate and never writes pet history. All displayed scores are game units, never BAC.
+A cup-vapor bench test observed approximately 107 mV in clean air, 414 mV exposed to 25% sake, and 106 mV after removal. Later user-started feeds saved actual MQ3 baseline/peak records, including 139/852 mV and 153/804 mV. Subsequent threshold testing recorded additional physical responses successfully. This demonstrates qualitative response, recovery and storage, not BAC calibration.
 
-## Threshold revision
-
-Version 5 requires a full quiet 50-250 mV window before every feeding, including the first after boot. Peaks below 400 mV score zero; peaks at or above 400 mV use the baseline-relative scoring formula. The default span doubles to 1200 mV, so the observed cup responses now score 57 and 52 without damage. Existing history retains its original score and scale.
-
-The self-test covers the 250/251 mV clean-air boundary, a stable 400 mV plume before any feeding, recovery to 250 mV from a lower baseline, the 399/400 mV response boundary, the observed cup response and the new overload boundary. The revised 71-check device suite passed, normal firmware version 5 was restored and its self-test passed. The connected board was explicitly set to 1200 mV. Both MQ3 records and the original DEMO record remained intact. Actual clean-air readiness was verified around 116 mV.
-
-The published framebuffers in docs/screenshots show the version 4 layout and scoring, before this threshold update; the button layout is unchanged.
+Version 6 retains the provisional 50-250 mV clean-air window, 400 mV response gate and 1200 mV scale. High levels now change animation rather than damage health. The new five-plus-ten-second capture path was verified with injected ADC values; it has not yet had a fresh user-operated physical cup test. A completed quiet sample is intentionally accepted, and the MQ-3 does not verify airflow or whether a person blew.

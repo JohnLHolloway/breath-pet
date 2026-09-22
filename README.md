@@ -4,7 +4,9 @@ A pocket party pet tank for the **LILYGO T-Display-S3**, with a 1.9-inch ST7789 
 
 ![Empty tank with Add Pet selected](docs/empty-tank.png)
 
-![Example tank after six demo pets have been adopted](docs/swimming-tank.png)
+![Mixed awake and sleeping pets with their states](docs/screenshots/party-sleep.png)
+
+![Pet outfit and one energy meter](docs/screenshots/party-pet.png)
 
 **Feed your pet now uses the real MQ-3 sensor by default. Cup vapor is suitable for setup without drinking. Scores are fictional game units, never BAC.**
 
@@ -14,13 +16,17 @@ The tank starts empty. Choose **Add Pet**, choose a nickname, then adopt a speci
 
 Nicknames include Captain, Goose, Bean, Chaos, Pickle, Nugget, Bubbles, Spud, Mochi, Gremlin, Waffles, Noodle, Goblin, Peach, Squid and Biscuit. Used names are skipped to avoid confusing people's readings. Species are Blob, Axolotl, Bat, Cat, Ghost and Frog.
 
-Choose a swimming pet to open its care screen:
+Choose a swimming pet to see its outfit, personality, one energy meter, and five actions:
 
-- **Feed:** keep the cup away while a fresh clean-air window settles. Press OK when Start live feed appears, then briefly bring the cup near the sensor. A 12-second sample captures the peak voltage rise for that pet only. Remove the cup after 5–10 seconds and let the sensor recover.
-- **History:** that pet's last 16 samples, labeled MQ3 or DEMO, with game score and health change. Measured entries retain baseline, peak and the response scale used.
-- **Rest:** recover health without taking a sample.
+- **Wake / feed:** let the sensor settle in clean air, then press Start feeding. A five-second GET READY countdown is followed by ten seconds of BLOW. For cup testing, bring vapor near the dry sensor only at BLOW, then remove it after capture. The highest reading during BLOW sets the reaction; the countdown readings are excluded.
+- **History:** that pet's last 16 readings, preserving original source, score, sensor values and old health deltas. Historical damage entries are not rewritten.
+- **Take a nap:** put your pet to sleep immediately.
+- **Wardrobe:** NEXT chooses hats, hand items, colours or Back; OK cycles the unlocked choices in that category.
+- **Play bubble catch:** press OK when the moving bubble is inside the gold zone. Three catches wake the pet without taking a sensor reading. NEXT offers Back.
 
-The roster, species, care stats, calibration and each person's history survive restarts. **Menu → Start a new evening** clears pets and history only after confirmation; Keep pets is selected by default. Calibration settings are retained. The v2 saved-data format migrates existing party pets and readings from v1; those older readings remain labeled DEMO. The solo prototype's data stays unassigned.
+Every pet's CHILL, PARTY, WILD, DROWSY or ASLEEP state appears beside it in the tank. Pet detail shows its belongings and personality instead of health/food/joy bars. Gameplay uses a reaction meter and game level; raw millivolts remain in the setup screen and USB history diagnostics.
+
+Collections follow the nickname across evenings. **Menu > Start new evening** clears the current roster, readings and evening awards after confirmation, but retains clothes and tank upgrades. **Evening awards** and **Tank upgrades** are also in that menu. Saving keeps existing v2 pet/history data and adds a separate versioned party-state record. Obsolete v1 data is removed only after a valid v2 record has been loaded, to reclaim the board's small save area.
 
 ## Two-button controls
 
@@ -35,40 +41,39 @@ In the tank, NEXT cycles through existing pets, Add Pet and Menu. Six is the cap
 
 Touch uses the same flows when a supported controller responds. Firmware probes CST816-family (0x15) and CST328 (0x1A) on SDA18/SCL17, reset21 and interrupt16. **The currently tested board does not respond to either address or the full I2C scan, and the user reports that touch does not work.** Everything is operable with buttons. Screen rendering does not prove touch hardware is present; LILYGO sells both variants.
 
-## Game rules — not alcohol units
+## Party mechanics and approximate response levels
 
-The provisional clean-air band is **50–250 mV at GPIO1**. A peak of **251–399 mV** is an uncertain response and scores zero; **400 mV or more** enables response scoring. Below 400 mV, a clean-air/weak-response feeding still gives the normal zero-score reward.
+These are provisional game reactions, not BAC or an estimate of someone's intoxication. The MQ-3 input must have a quiet 100-sample window entirely between **50 and 250 mV**, with at most 25 mV spread, before Start feeding becomes available. The frozen baseline is taken when Start is pressed. After a five-second countdown, the peak from the following ten seconds is used. Early exposure during countdown does not count toward the peak. Clean-air settling is repeated before every attempt.
 
-At or above 400 mV, live score is `clamp(max(0, peak_mV - baseline_mV - 20) * 100 / sensor_span_mV, 0, 100)`. The default span is now **1200 mV**, twice the previous range, so the same response scores about half as much. For the observed baseline of 139 mV and cup peak of 852 mV, the new score is **57** instead of 100: feeding without damage. With that baseline, overload starts at 999 mV (score 70). The threshold moves with the fresh baseline and response setting; 400 mV is not the overload threshold.
+Peaks below **400 mV** give game level zero. Otherwise, the level is `clamp(max(0, peak_mV - baseline_mV - 20) * 100 / sensor_span_mV, 0, 100)`. The saved default span is 1200 mV; existing custom settings survive upgrades. Menu > Response settings changes this range from 100 to 2000 mV. Demo mode uses the existing fake zero/span calibration and is available for this boot from Change input mode.
 
-These thresholds are provisional game settings for this sensor/divider setup, not evidence that someone drank or a BAC calibration. The 20 mV allowance suppresses small fluctuations.
+- **CHILL (0-24):** gentle swimming and bubble chasing.
+- **PARTY (25-69):** faster swimming and more bubbles.
+- **WILD (70-100):** zooming, winking, wobbling and sparkling bubbles. No damage.
+- **DROWSY:** ten powered minutes without a feeding or completed game.
+- **ASLEEP:** twenty powered minutes, or Take a nap; pets settle on the tank floor with closed eyes and Zzz.
 
-Demo mode retains `clamp((fake_input - zero) * 100 / span, 0, 100)`. Demo and live settings are independent.
+Any completed feeding, including a zero-response reading, wakes the pet, restores energy and gives the same food/joy increment. There is no neglect damage or high-reading penalty. Old health/food/joy fields remain for save compatibility and USB diagnostics; energy is the only care bar in the UI. Timers pause while powered off. Five-second feeding and ten-second nap button cooldowns remain.
 
-- Score **0**: +8 food, +6 joy. Anyone can play without alcohol.
-- Score **1–69**: +15 food, +12 joy; the reward is capped across this range.
-- Score **70–100**: overload; +3 food, −12 joy, and health damage `10 + floor((score - 70) / 2)`.
-- Stats stay within 0–100. Rest adds up to 8 health and 4 joy, and clears the overload expression.
-- Each pet has a five-second feeding cooldown and ten-second rest cooldown to prevent repeat-button accidents.
-- While powered, food and joy decay by one per minute; an empty food meter also costs one health. There is no offline decay.
+## Clothes, personalities and shared toys
 
-Menu → Response settings adjusts live span from 100–2000 mV in 100 mV steps, or restores 1200 mV. More responsive reduces span; less responsive increases it. Existing saved settings survive firmware updates; choose Default to apply the new 1200 mV scale. Earlier records retain their original scale and result. Menu → Change input mode toggles live/demo for the current boot; normal firmware boots into live mode. In demo mode, Response settings retains the fake zero/span controls (25–200).
+A feeding or completed bubble game earns at most one rewarded check-in per pet per ten powered minutes. Repeating it can still wake the pet but cannot farm clothes. The reward calculation never uses the sensor level.
 
-Samples carry a global sequence number plus boot number and seconds since that boot. These are session labels, not wall-clock timestamps. No Wi-Fi, network account, or external service is involved in gameplay.
+- First rewarded check-in: a red cup, automatically equipped.
+- Later rewarded check-ins: a random unowned accessory; the third guarantees a hat if any hats remain.
+- Hats: party cone, cowboy hat, crown, sunglasses and top hat.
+- Hand items: red cup, pizza slice, floatie and bubble wand.
+- Return with the same nickname on a second, third and fourth evening to unlock sunshine, lilac and ocean colours. Up to 32 nickname collections are retained.
 
-## Live feeding and recovery
+Personalities are stable by nickname: Goose is a hat prankster, Bean is a shy cup buddy, and Captain leads short parades. Other nicknames get a repeatable personality. Awake pets periodically gather for a shared greeting/parade; the prankster briefly borrows a visual hat without changing anyone's inventory. Friendly encounters accumulate every two powered minutes when at least two pets are awake.
 
-1. Choose a pet and Feed your pet. Keep the cup away in clean air.
-2. The screen collects a fresh 100-sample window (at least ten seconds). Every sample must be between 50 and 250 mV, with a window spread no greater than 25 mV.
-3. When ready, press OK, then bring cup vapor near the dry sensor for 5–10 seconds. The full capture lasts 12 seconds; its fresh-air baseline stays frozen.
-4. The peak rise determines the game score. A clean-air capture with no rise gives a score of zero and still feeds the pet; alcohol is not required.
-5. Remove the cup. The next feeding waits for another full quiet window in the 50–250 mV clean-air band. This applies to every pet, including after cancelling, and allows normal baseline drift within that band. Recovery may take a minute or longer.
+Shared rewarded check-ins unlock a jukebox at two, a pirate ship at five, and a disco ball at eight. If at least two pets have checked in and everyone is awake, an eligible check-in also triggers fifteen seconds of confetti and unlocks the disco ball early. Decorations stay across evenings. Awards compare collectible counts (Best Dressed), naps (Most Naps) and friendly encounters (Social Butterfly); ties are identified on screen. Awards update throughout the evening, so view them before starting a new one.
 
-Holding Back or Menu cancels without a history entry. Readings below 20 mV or above 2700 mV during capture, or fewer than 80 acquired samples, reject the capture without changing pet stats. These checks cannot detect every wiring fault. Fresh air must actually be clean air; a stable alcohol plume cannot be automatically identified as a bad baseline. The fresh clean-air window is required after power-up too; a stable reading above 250 mV cannot start a feeding.
+## Sensor diagnostics
 
-**Menu → MQ-3 setup** remains a live-voltage bench monitor with its own temporary zero, independent of feeding. The hardware cup test observed about 107 mV in clean air, 414 mV after sake exposure, and 106 mV after removal. This is qualitative response/recovery evidence; it is not concentration calibration.
+Captures below 20 mV or above 2700 mV, or with fewer than 80 acquired samples, are rejected without history or rewards. Hold Back or Menu to cancel the countdown or capture. These checks cannot identify every wiring fault or prove that breath was provided; the MQ-3 has no airflow detector. Gameplay deliberately accepts a quiet zero-response capture.
 
-The module is the [ACEIRMC MQ-3 board](https://www.amazon.com/dp/B0978KZQVY). See [MQ3_WIRING.md](MQ3_WIRING.md) for eight 2 kΩ resistors, 5 V power, GPIO1 and multimeter checks. Initial sensor conditioning and repeatability still matter; this prototype never reports BAC.
+Menu > MQ-3 setup shows millivolts and a live trace, with its own temporary baseline independent of feeding. See [MQ3_WIRING.md](MQ3_WIRING.md) for the eight-resistor divider, 5 V supply, GPIO1, conditioning and multimeter checks. Cup tests have demonstrated response/recovery and real history capture; they are not concentration calibration.
 
 ## Build and upload
 
@@ -97,7 +102,7 @@ The build pins `espressif32@6.5.0` / Arduino-ESP32 2.0.14, following LILYGO's wo
 
 Tests use the separate `breath-test` NVS namespace; your normal pets in `breath-pet` are preserved. The script refuses to reset data unless the test firmware reports `test_mode: true`. The helper restores the normal firmware even when tests fail (leave USB connected). `-ResetDemoData` remains accepted for older scripts but is no longer required.
 
-The device test drives the same navigation handlers as the physical buttons. It checks adoption, taken-name skipping, six-player capacity, timed feeding, cooldowns, owner isolation, overload/recovery, input validation, persistent stats/history and calibration, animation, and new-evening confirmation. The live test uses synthetic ADC values available only in the isolated test build; it checks fresh baselines, scoring, source labeling, recovery across owners, cancellation, invalid voltage and persistence. Separate on-device tests cover old-data migration, stat bounds, timing, score limits and history rollover. Test output is saved to ignored `test-results.json`.
+The device test drives the same navigation handlers as the physical buttons. It checks adoption, taken-name skipping, six-player capacity, timed feeding, cooldowns, owner isolation, high-response reactions, input validation, persistent stats/history and calibration, animation, and new-evening confirmation. The live test uses synthetic ADC values available only in the isolated test build; it checks fresh baselines, scoring, source labeling, recovery across owners, cancellation, invalid voltage and persistence. The expanded suite also covers countdown isolation, timed capture, sleep boundaries, zero-response wakeups, rewards, cooldowns, wardrobe controls, mini-game misses and wins, returning nicknames, awards and persistent collections. Separate on-device tests cover old-data migration, stat bounds, timing, score limits and history rollover. Test output is saved to ignored `test-results.json`.
 
 Newline-terminated serial commands at 115200 baud:
 
@@ -122,7 +127,7 @@ input live               input demo
 
 ## Files and licensing
 
-`src/party.h` holds per-person state, persistence and game rules. `src/main.cpp` handles navigation, input and feeding. `src/ui.h` draws the shared selection UI and screens. `src/mq3.h` handles ADC acquisition, live capture and recovery checks. `src/hardware.h` contains the display initialization, button debouncing and touch drivers.
+`src/party.h` holds per-person state, persistence and game rules. `src/main.cpp` handles navigation, input and feeding. `src/ui.h` draws the shared selection UI and screens. `src/mq3.h` handles ADC acquisition, live capture and recovery checks. `src/fun.h` holds sleep, collections, rewards, personalities, group progress and awards. `src/hardware.h` contains the display initialization, button debouncing and touch drivers.
 
 Original code is MIT licensed. TFT_eSPI 2.5.43, TouchLib, the board definition and ST7789 initialization come from [LILYGO's T-Display-S3 repository](https://github.com/Xinyuan-LilyGO/T-Display-S3), commit `ec889e789b3cf093412689a143f7f37b42b56af7`, with vendor licenses retained in `lib/`.
 
