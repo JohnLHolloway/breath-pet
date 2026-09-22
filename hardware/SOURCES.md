@@ -13,7 +13,8 @@ Checked 2026-09-22. Measurements from CAD are nominal; they do not measure the u
 
 ## MQ sensor references
 
-- [Hanwei MQ-3 manufacturer datasheet, hosted by SparkFun](https://cdn.sparkfun.com/assets/6/a/1/7/b/MQ-3.pdf): classic 9.5 mm pin-circle geometry, 45-degree A/B locations, package alternatives and older 200 kΩ load circuit. The project custom footprint follows that geometry with enlarged 1.2 mm finished holes and 20 mm body allowance.
+- [Hanwei MQ-3 manufacturer datasheet, hosted by SparkFun](https://cdn.sparkfun.com/assets/6/a/1/7/b/MQ-3.pdf): classic 9.5 mm pin-circle geometry, 45-degree A/B locations, package alternatives and older 200 kΩ load circuit. The project custom footprint follows that geometry with enlarged 1.2 mm finished holes. The donor's pin geometry still needs a physical fit check.
+- User measurement on 2026-09-22: orange sensor outside diameter **16.7 mm**, installed height **9.82 mm above the blue module PCB**. These measurements drive the body envelope, compact carrier and case opening. The rendered underside gap and mesh diameter are illustrative, not separately measured.
 - [Winsen MQ-3 v1.3 manual, hosted by SparkFun](https://cdn.sparkfun.com/datasheets/Sensors/Biometric/MQ-3%20ver1.3%20-%20Manual.pdf): 5 V heater, up to 900 mW, example curves with a 4.7 kΩ load, conditioning and handling guidance. Its package drawing differs from the classic large can: it does **not** prove donor-footprint compatibility.
 - [Winsen MQ-3B product](https://www.winsen-sensor.com/product/mq-3b.html) and [manual](https://www.winsen-sensor.com/d/files/manual/mq-3b.pdf) provide another current variant, not an identification of the ACEIRMC module's can.
 - The custom sensor footprint uses heater pins 2/5 and electrode pairs 1/3 and 4/6. Top/bottom-view mirroring exchanges the equivalent electrode groups and heater polarity, but the heater axis must still match. Verify continuity on the actual donor with power off.

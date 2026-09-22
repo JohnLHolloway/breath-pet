@@ -9,10 +9,10 @@
       "valid": true,
       "size_mm": [
         76.0,
-        78.0,
+        62.0,
         25.001
       ],
-      "volume_mm3": 33774.978
+      "volume_mm3": 29056.578
     },
     {
       "name": "case-cover",
@@ -20,10 +20,10 @@
       "valid": true,
       "size_mm": [
         76.0,
-        78.0,
-        2.02
+        62.0,
+        2.014
       ],
-      "volume_mm3": 6403.085
+      "volume_mm3": 4626.019
     },
     {
       "name": "header-fit-gauge",
@@ -53,9 +53,15 @@
   "pcb_bottom_above_case_floor_mm": 5.0,
   "lid_bottom_z_mm": 25.0,
   "sensor_envelope_mm": {
-    "diameter": 20,
-    "height_above_pcb": 19
+    "diameter": 16.7,
+    "height_above_pcb": 9.82
   },
+  "sensor_measurement_source": "User measurement, 2026-09-22; height above module PCB",
+  "assembled_case_size_mm": [
+    76,
+    62,
+    27.0
+  ],
   "notes": [
     "Print gauges before PCB order.",
     "Case is a vented prototype, not liquid sealed.",

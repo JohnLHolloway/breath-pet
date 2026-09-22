@@ -18,7 +18,8 @@ with warnings.catch_warnings(record=True) as notices:
     npth = stack.drill_npth.objects
 messages = [str(n.message).replace(str(ROOT), 'rev-a') for n in notices]
 bounds = stack.board_bounds()
-assert all(abs(a-b) < .001 for a, b in zip(sum(bounds, ()), (-.025, -70.025, 68.025, .025))), bounds
+assert all(abs(a-b) < .001 for a, b in zip(sum(bounds, ()),
+    (-.025, -D['size_mm'][1] - .025, D['size_mm'][0] + .025, .025))), bounds
 
 
 def present(objects, x, y, diameter):
@@ -30,7 +31,7 @@ for y in D['header_y_mm']:
     for n in range(12):
         assert present(pth, 28+n*2.54, -y, 1), (n, y)
 for x, y in D['sensor_pads_mm'].values():
-    assert present(pth, 34+x, -56-y, 1.2), (x, y)
+    assert present(pth, D['sensor_center_mm'][0]+x, -D['sensor_center_mm'][1]-y, 1.2), (x, y)
 for x, y, diameter in D['mount_holes_mm']:
     assert present(npth, x, -y, diameter), (x, y)
 assert len(npth) == 3

@@ -20,7 +20,11 @@ MALE_SPACER = 2.54
 BOARD_REAR = THICK + SOCKET_HEIGHT + MALE_SPACER
 CASE_TOP = 25.0
 HOLES = [(x, -y) for x, y, diameter in D['mount_holes_mm']]
-COVER_HOLES = [(-2, -35), (70, -35), (16, -72), (52, -72)]
+COVER_HOLES = [(-2, -32), (W + 2, -32), (16, -H - 2), (52, -H - 2)]
+SENSOR_X, SENSOR_Y = D['sensor_center_mm']
+SENSOR_Y = -SENSOR_Y
+SENSOR_RADIUS = D['sensor_diameter_mm'] / 2
+SENSOR_HEIGHT = D['sensor_installed_height_mm']
 
 
 def box(x, y, z, dx, dy, dz):
@@ -61,8 +65,8 @@ sensor_gauge = holes(sensor_gauge, [(x, -y) for x, y in D['sensor_pads_mm'].valu
 sensor_gauge = sensor_gauge.cut(box(-13, -1, -1, 3, 2, 4))  # heater-axis notch
 
 # Walls and floor: print flat, all vertical holes. Open-top USB slot avoids supports.
-base = box(-4, -74, 0, 76, 78, CASE_TOP)
-base = base.cut(box(-.6, -70.6, 2, 69.2, 71.2, CASE_TOP + 2))
+base = box(-4, -H - 4, 0, W + 8, H + 8, CASE_TOP)
+base = base.cut(box(-.6, -H - .6, 2, W + 1.2, H + 1.2, CASE_TOP + 2))
 for x, y in HOLES:
     base = base.union(cylinder(x, y, 2, 2.5, 3))
     base = base.cut(cylinder(x, y, 1.2, 1.05, 5))
@@ -72,17 +76,17 @@ for x, y in COVER_HOLES:
     base = base.union(cylinder(x, y, 2, 1.7, CASE_TOP - 2))
     base = base.cut(cylinder(x, y, CASE_TOP - 7, .8, 10))
 # Floor ventilation is outside PCB mounting bosses, under the sensor wing.
-for x in (20, 25, 30, 35, 40, 45):
-    base = base.cut(box(x, -64, -1, 2, 15, 4))
+for x in (8, 12, 16, 20):
+    base = base.cut(box(x, -48, -1, 1.5, 12, 4))
 
 # Flat cover: screen and both board buttons remain directly accessible.
 # Main aperture uses board envelope; it is intentionally not a tight bezel.
-cover = box(-4, -74, 0, 76, 78, 2)
-cover = cover.cut(box(1.5, -30, -1, 64.5, 31, 4))
-cover = cover.cut(cylinder(34, -56, -1, 14, 4))
+cover = box(-4, -H - 4, 0, W + 8, H + 8, 2)
+cover = cover.cut(box(1.5, -29.5, -1, 64.5, 30.5, 4))
+cover = cover.cut(cylinder(SENSOR_X, SENSOR_Y, -1, SENSOR_RADIUS + 2, 4))
 cover = holes(cover, COVER_HOLES, 1.1, -1, 4)
-for x in (9, 15, 51, 57):
-    cover = cover.cut(box(x, -62, -1, 2, 12, 4))
+for x in (29, 33, 47, 51):
+    cover = cover.cut(box(x, -49, -1, 2, 10, 4))
 
 reports = [export(base, 'case-base'), export(cover, 'case-cover'),
            export(gauge, 'header-fit-gauge'), export(sensor_gauge, 'sensor-fit-gauge')]
@@ -94,19 +98,21 @@ lilygo = cq.importers.importStep(str(vendor_file))
 lilygo = lilygo.rotate((0, 0, 0), (1, 1, 0), 180).translate((3.9968, .0104 - 16, BOARD_REAR))
 socket = [box(26.73, -y - 1.27, THICK, 30.48, 2.54, SOCKET_HEIGHT) for y in D['header_y_mm']]
 spacers = [box(26.73, -y - 1.27, THICK + SOCKET_HEIGHT, 30.48, 2.54, MALE_SPACER) for y in D['header_y_mm']]
-# Conservative classic MQ can envelope: 20 mm diameter, 17 mm above 2 mm stand-off.
-sensor = cylinder(34, -56, THICK + 2, 10, 17)
-sensor_base = cylinder(34, -56, THICK + 2, 10, 2)
-sensor_leads = [cylinder(34 + x, -56 - y, -.5, .5, THICK + 2.5)
+# Measured installed envelope includes the gap above the PCB, not extra stand-off.
+# The 0.8 mm underside gap and 10 mm mesh representation are visual assumptions.
+sensor = cylinder(SENSOR_X, SENSOR_Y, THICK + .8, SENSOR_RADIUS, SENSOR_HEIGHT - .8)
+sensor_mesh = cylinder(SENSOR_X, SENSOR_Y, THICK + SENSOR_HEIGHT - .15, 5, .15)
+sensor = sensor.cut(sensor_mesh)
+sensor_leads = [cylinder(SENSOR_X + x, SENSOR_Y - y, -.5, .5, THICK + 1.3)
                 for x, y in D['sensor_pads_mm'].values()]
 smd = []
-for x, y in [(30, 35), (35, 39), (39, 33), (46, 36), (24, 35.5), (25, 39), (51, 47)]:
+for x, y in [(30, 35), (35, 39), (39, 33), (46, 36), (24, 35.5), (25, 39), (28, 49)]:
     smd.append(box(x - 1, -y - .625, THICK, 2, 1.25, 1.3))
 diode = box(50.5, -36.25, THICK, 3, 2.5, 1.1)
-jumper = box(5.73, -35.81, THICK, 2.54, 5.08, 7)
+jumper = box(1.73, -34.81, THICK, 2.54, 5.08, 7)
 
 parts = [('carrier', pcb, (.06, .35, .23)), ('display-board', lilygo, (.13, .16, .18)),
-         ('sensor-can-envelope', sensor, (.7, .73, .76)), ('sensor-base', sensor_base, (.12, .15, .18)),
+         ('sensor-measured-envelope', sensor, (.83, .27, .09)), ('sensor-mesh-placeholder', sensor_mesh, (.7, .73, .76)),
          ('diode', diode, (.1, .1, .1)), ('power-jumper', jumper, (.12, .12, .12))]
 parts += [(f'socket-{i}', p, (.1, .1, .12)) for i, p in enumerate(socket)]
 parts += [(f'header-spacer-{i}', p, (.15, .15, .15)) for i, p in enumerate(spacers)]
@@ -140,7 +146,9 @@ full.export(str(OUT / 'case-assembly.step'))
     'envelope_interferences': interferences, 'parts': reports,
     'assumed_socket_height_mm': SOCKET_HEIGHT, 'assumed_male_spacer_mm': MALE_SPACER,
     'pcb_bottom_above_case_floor_mm': PCB_Z, 'lid_bottom_z_mm': CASE_TOP,
-    'sensor_envelope_mm': {'diameter': 20, 'height_above_pcb': 19},
+    'sensor_envelope_mm': {'diameter': SENSOR_RADIUS * 2, 'height_above_pcb': SENSOR_HEIGHT},
+    'sensor_measurement_source': D['sensor_measurement_source'],
+    'assembled_case_size_mm': [W + 8, H + 8, CASE_TOP + 2],
     'notes': ['Print gauges before PCB order.', 'Case is a vented prototype, not liquid sealed.',
               'Verify heater temperature and real stack height before enclosed operation.']
 }, indent=2) + '\n', encoding='utf-8')
@@ -175,7 +183,7 @@ def render(items, name, eye=(125, -160, 160)):
         renderer.AddActor(actor)
     camera = renderer.GetActiveCamera()
     camera.SetPosition(*eye)
-    camera.SetFocalPoint(34, -35, 12)
+    camera.SetFocalPoint(W / 2, -H / 2, 12)
     camera.SetViewUp(0, 0, 1)
     camera.ParallelProjectionOn()
     renderer.ResetCamera()

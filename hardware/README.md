@@ -1,8 +1,8 @@
 # Breath Pet carrier PCB — Rev A prototype
 
-> **Sizing revision pending — do not order this PCB or print the full case yet.** The user's hardware photo exposed an oversized layout and an unverified sensor-body model. The 20 mm × 17 mm sensor envelope does not establish the actual orange-capped part's dimensions. The bare LILYGO model is approximately 62 × 26 mm, while this carrier is 68 × 70 mm and its case is 76 × 78 mm. Sensor diameter and installed body height are needed to repack the layout. Header spacing remains vendor-derived; do not scale the entire PCB/STL to compensate. The files below retain the first prototype for revision, not fabrication approval.
+> **Sizing corrected using the user's measurements on 2026-09-22:** the orange sensor is **16.7 mm diameter × 9.82 mm above the module PCB**, including its installed clearance. The carrier is now **68 × 54 mm**, and the case is **76 × 62 × 27 mm**. The bare LILYGO remains approximately 62 × 26 mm at its vendor dimensions. The measured body size does not verify the donor's six-pin spacing; check the fit gauges before fabrication. Print at 100% scale.
 
-A **68 × 70 mm, two-layer carrier** for the LILYGO T-Display-S3, with a bare MQ-3 soldered directly beside it. The LILYGO plugs into two female sockets. A replacement printed case is optional; the carrier can be tested on insulated standoffs with no case.
+A **68 × 54 mm, two-layer carrier** for the LILYGO T-Display-S3, with a bare MQ-3 soldered directly beside it. The LILYGO plugs into two female sockets. A replacement printed case is optional; the carrier can be tested on insulated standoffs with no case.
 
 **Status: CAD-checked, not yet manufactured or bench-tested.** Check the actual sensor and print the fit gauges before ordering. These files are a prototype release, not a claim that an assembled board has passed testing. The original breadboard and firmware are unchanged.
 
@@ -10,7 +10,7 @@ A **68 × 70 mm, two-layer carrier** for the LILYGO T-Display-S3, with a bare MQ
 | --- | --- |
 | ![CAD model of carrier with LILYGO and MQ-3 envelope](rev-a/previews/electronics.png) | ![Vented case with screen, button and sensor openings](rev-a/previews/case.png) |
 
-The pictures are renders of the supplied CAD. The display uses LILYGO's model; the sensor, sockets and small components are dimensional envelopes. Copper and silkscreen are shown separately in the PCB previews. The sensor mesh, actual socket contacts and screws are not modeled.
+The pictures are renders of the supplied CAD. The display uses LILYGO's model; the sensor, sockets and small components are dimensional envelopes. Copper and silkscreen are shown separately in the PCB previews. The grey sensor face represents the mesh; its texture, actual socket contacts and screws are not modeled. The sensor model's 0.8 mm underside gap is a visual assumption within the measured 9.82 mm total height.
 
 ## Files to use
 
@@ -30,7 +30,7 @@ The pictures are renders of the supplied CAD. The display uses LILYGO's model; t
 ## What is on the board
 
 - **J1/J2:** two 1×12, 2.54 mm sockets, with rows 22.86 mm apart. Viewed from above with the display up and USB left, J1/P1 is the upper row, J2/P2 the lower row. Pin 1 is nearest USB. This orientation was cross-checked against the vendor schematic, pinout, STEP and shield drawing.
-- **S1:** six-hole classic MQ sensor footprint, 9.5 mm pin circle with A/B electrodes at 45°. Holes are 1.2 mm, pads 2.4 mm. The courtyard allows a 20 mm can. Verify the actual donor; the name “MQ-3” alone does not establish compatibility.
+- **S1:** six-hole classic MQ sensor footprint, 9.5 mm pin circle with A/B electrodes at 45°. Holes are 1.2 mm, pads 2.4 mm. The body is 16.7 mm diameter, with 0.5 mm radial courtyard clearance. Verify the actual donor's pin spacing; the name “MQ-3” alone does not establish compatibility.
 - **JP1:** removable sensor-power shunt. Remove it for troubleshooting; fit it for normal operation.
 - **R1/R2/R3/C1:** half-voltage divider, series resistor and filter feeding **GPIO1**. This preserves the firmware's ADC pin and nominal 1:2 voltage scale.
 - **R4:** sensor load option. Its fitted value depends on the sensor variant, as below.
@@ -72,17 +72,17 @@ Condition a new sensor according to its own manual, warm it consistently, and es
 
 1. Print **both fit gauges first**, flat at 100% scale in mm. The header gauge is 68 × 32 × 1.2 mm; its notch marks the USB side. The sensor gauge is about 24 mm across and 1.2 mm thick; its notch marks the heater axis. Check pitch gently without forcing pins. Printed-hole shrinkage is possible: distinguish a tight hole from incorrect spacing.
 2. Check socket height. CAD assumes an **8.5 mm female socket body plus 2.54 mm male-header spacer**. The LILYGO rear surface is 12.64 mm above the carrier underside. A different stack requires changing the case generator. The existing factory case is not used.
-3. Print the base upright on its flat bottom and the cover flat, **0.2 mm layers, 3–4 walls, about 20% infill**, supports off. The footprint is **76 × 78 mm**, overall closed height 27 mm. All openings are vertical; the USB slot is open to the top during printing. A small brim is optional for adhesion.
+3. Print the base upright on its flat bottom and the cover flat, **0.2 mm layers, 3–4 walls, about 20% infill**, supports off. The footprint is **76 × 62 mm**, overall closed height 27 mm. Header/socket height determines the case height; the smaller sensor sits recessed below the lid. All openings are vertical; the USB slot is open to the top during printing. A small brim is optional for adhesion.
 4. PLA is useful for a fit-only trial. Use a suitable heat-tolerant printing material for operation, and **measure the warmed sensor/nearby plastic temperature before leaving it enclosed**. PETG is a practical candidate on an appropriately configured Ender 3, not a thermal qualification. Do the first powered checks caseless.
-5. Solder small parts first, then sockets, power jumper and sensor. Use the unpowered LILYGO as an alignment jig only if needed; avoid letting solder flow into sockets. Leave about 2 mm below the sensor body for airflow, within the assumed 19 mm total height above the PCB. Install the carrier on three short M2.5 screws, then plug in the display. The cover uses four M2 screws; pilot holes may need cleanup for your printer and screw type. Stop if plastic splits or a screw bottoms out.
+5. Solder small parts first, then sockets, power jumper and sensor. Use the unpowered LILYGO as an alignment jig only if needed; avoid letting solder flow into sockets. Preserve the donor's installed sensor clearance and check its total height against the measured 9.82 mm; no extra 2 mm stand-off has been added to the model. Install the carrier on three short M2.5 screws, then plug in the display. The cover uses four M2 screws; pilot holes may need cleanup for your printer and screw type. Stop if plastic splits or a screw bottoms out.
 
-The wide screen opening exposes both real buttons; no printed button linkage is required. The 28 mm sensor opening and extra vents leave breathing space. This is an **open, vented enclosure**, not a splashproof bar product or a mouthpiece. A later case can add a replaceable splash baffle once airflow and heat have been measured.
+The wide screen opening exposes both real buttons; no printed button linkage is required. The 20.7 mm sensor opening and extra vents leave breathing space. This is an **open, vented enclosure**, not a splashproof bar product or a mouthpiece. A later case can add a replaceable splash baffle once airflow and heat have been measured.
 
 ## Verification and remaining work
 
 KiCad 10.0.6 reported **zero ERC violations, zero DRC violations, zero unrouted connections, and zero schematic/PCB parity issues** with the saved design rules. A separate netlist check verifies all seven functional nets. Eight SMT placements and the manufacturing ZIP were checked. Independent Gerber/Excellon parsing checks the outline and 33 critical hole positions. CadQuery validates each printable part as a single solid and reports no nominal electronics/case intersections; all four STL meshes have no boundary or non-manifold edges. Reports are in [rev-a/checks](rev-a/checks).
 
-These checks do not verify the donor sensor, soldering, actual header tolerances, JLC part matching, printed screw fits, heater temperature, airflow, power stability, or gas response. No custom PCB has been manufactured or powered. No order has been submitted. The firmware's existing 99-device-check result belongs to the original breadboard setup, not this PCB.
+These checks do not verify the donor sensor, soldering, actual header tolerances, JLC part matching, printed screw fits, heater temperature, airflow, power stability, or gas response. No custom PCB has been manufactured or powered. No order has been submitted. The firmware's existing 105-device-check result belongs to the original breadboard setup, not this PCB.
 
 The next physical steps are: identify the spare can, print and check gauges, select the load-resistor variant, review JLC's matched parts/placement preview, build a small prototype batch, then run meter, cup-response and heat checks. Battery operation and a more sealed case are later revisions.
 

@@ -99,7 +99,7 @@ for row in rows:
     if row['Ref'] in smt:
         positions.append([row['Ref'], row['PosX'], row['PosY'], 'Top', row['Rot']])
 assert {p[0] for p in positions} == smt
-assert all(0 <= float(p[1]) <= 68 and -70 <= float(p[2]) <= 0 for p in positions)
+assert all(0 <= float(p[1]) <= 68 and -54 <= float(p[2]) <= 0 for p in positions)
 write_csv(MFG / 'jlc-cpl-direct.csv', ['Designator', 'Mid X', 'Mid Y', 'Layer', 'Rotation'], positions)
 write_csv(MFG / 'hand-assembly.csv', ['Designator', 'Quantity', 'Part', 'Notes'], [
     ['J1,J2', 2, '1x12 female socket 2.54mm pitch', '8.5mm body assumed in CAD; straight top-entry; verify stack'],

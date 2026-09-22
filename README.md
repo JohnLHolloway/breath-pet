@@ -44,7 +44,7 @@ Follow the [wiring diagram and meter checks](MQ3_WIRING.md) before connecting th
 
 [Rev A hardware](hardware/README.md) replaces the breadboard with a socketed LILYGO carrier and a directly mounted MQ-3. It includes editable KiCad files, a Gerber ZIP, JLCPCB BOM/CPL preparation, STEP models, and Ender 3 case/fit-gauge STLs. **This is an unbuilt prototype:** CAD checks pass, but the actual sensor variant, printed fit and powered behavior still need verification. The case is optional.
 
-**The first PCB/case layout is on hold for a proportions revision.** Its sensor envelope was assumed and the carrier is oversized. Follow the hardware guide's sizing status before ordering or printing.
+**Sizing updated from the actual sensor measurements:** 16.7 mm diameter and 9.82 mm installed height. The compact carrier is **68 × 54 mm**, with an optional **76 × 62 × 27 mm** case. Print the fit gauges and check the donor's pin spacing and socket height before fabrication.
 
 ![CAD prototype of the direct-sensor carrier](hardware/rev-a/previews/electronics.png)
 

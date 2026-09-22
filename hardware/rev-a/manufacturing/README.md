@@ -1,6 +1,6 @@
 # JLCPCB prototype ordering packet
 
-> **Order hold: mechanical proportions are being revised after comparison with the actual hardware.** Do not upload this packet for production yet. The actual sensor diameter/body height and a more compact component arrangement must be resolved first. CAD electrical checks do not establish mechanical fit.
+> **Compact layout updated 2026-09-22:** 68 × 54 mm carrier, sized around the measured 16.7 mm diameter / 9.82 mm installed-height sensor. This packet replaces the earlier oversized layout. Verify the donor's pin geometry with the fit gauge and confirm the socket stack before ordering; CAD checks do not establish physical fit.
 
 **This is an unbuilt prototype. Confirm sensor geometry and assembly variant before fabrication.** The Gerber packet is complete; the assembly BOM/CPL are prepared for manual part selection. No JLC quote, stock reservation, upload or paid order has been made.
 
@@ -14,7 +14,7 @@ The existing five-pack provides donors, subject to package/electrical checks and
 
 Upload [breath-pet-rev-a-gerbers.zip](breath-pet-rev-a-gerbers.zip) to the PCB quote tool and inspect the preview:
 
-- **2 layers**, FR-4, **68 × 70 mm**, **1.6 mm** thickness, **1 oz copper**.
+- **2 layers**, FR-4, **68 × 54 mm**, **1.6 mm** thickness, **1 oz copper**.
 - Five individual boards are a reasonable prototype quantity. No panelization is included.
 - Standard green solder mask and lead-free HASL are sufficient design choices; ENIG is optional.
 - Separate plated and non-plated drill files are included. Three 2.7 mm NPTH mounting holes and six 1.2 mm sensor holes should be visible.
