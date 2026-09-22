@@ -1,5 +1,7 @@
 # Breath Pet carrier PCB — Rev A prototype
 
+> **Sizing revision pending — do not order this PCB or print the full case yet.** The user's hardware photo exposed an oversized layout and an unverified sensor-body model. The 20 mm × 17 mm sensor envelope does not establish the actual orange-capped part's dimensions. The bare LILYGO model is approximately 62 × 26 mm, while this carrier is 68 × 70 mm and its case is 76 × 78 mm. Sensor diameter and installed body height are needed to repack the layout. Header spacing remains vendor-derived; do not scale the entire PCB/STL to compensate. The files below retain the first prototype for revision, not fabrication approval.
+
 A **68 × 70 mm, two-layer carrier** for the LILYGO T-Display-S3, with a bare MQ-3 soldered directly beside it. The LILYGO plugs into two female sockets. A replacement printed case is optional; the carrier can be tested on insulated standoffs with no case.
 
 **Status: CAD-checked, not yet manufactured or bench-tested.** Check the actual sensor and print the fit gauges before ordering. These files are a prototype release, not a claim that an assembled board has passed testing. The original breadboard and firmware are unchanged.

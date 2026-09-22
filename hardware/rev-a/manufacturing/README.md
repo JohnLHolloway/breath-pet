@@ -1,5 +1,7 @@
 # JLCPCB prototype ordering packet
 
+> **Order hold: mechanical proportions are being revised after comparison with the actual hardware.** Do not upload this packet for production yet. The actual sensor diameter/body height and a more compact component arrangement must be resolved first. CAD electrical checks do not establish mechanical fit.
+
 **This is an unbuilt prototype. Confirm sensor geometry and assembly variant before fabrication.** The Gerber packet is complete; the assembly BOM/CPL are prepared for manual part selection. No JLC quote, stock reservation, upload or paid order has been made.
 
 ## Recommended first batch
