@@ -1,4 +1,4 @@
-"""Integration test against real firmware over USB. Resets only the demo pet state."""
+"""Exercises party ownership and the actual button state machine on the ESP32."""
 import argparse
 import json
 import time
@@ -6,108 +6,96 @@ from datetime import datetime, timezone
 from pathlib import Path
 import serial
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--port', default='COM3')
-parser.add_argument('--reset-demo-data', action='store_true', help='Required: this test replaces simulated history and calibration settings')
-args = parser.parse_args()
-if not args.reset_demo_data:
-    parser.error('--reset-demo-data is required because this integration test changes saved demo data')
-report = {'timestamp': datetime.now(timezone.utc).isoformat(), 'port': args.port, 'checks': []}
+p=argparse.ArgumentParser()
+p.add_argument('--port',default='COM3')
+p.add_argument('--reset-demo-data',action='store_true')
+p.add_argument('--keep-demo-roster',action='store_true')
+args=p.parse_args()
+if not args.reset_demo_data: p.error('--reset-demo-data is required: this replaces the current evening')
+report={'timestamp':datetime.now(timezone.utc).isoformat(),'checks':[]}
 
-def check(name, condition):
-    report['checks'].append({'name': name, 'pass': bool(condition)})
-    print(f"{'PASS' if condition else 'FAIL'} {name}", flush=True)
-    if not condition:
-        raise AssertionError(name)
+def check(name,condition):
+    report['checks'].append({'name':name,'pass':bool(condition)})
+    print(('PASS ' if condition else 'FAIL ')+name,flush=True)
+    if not condition: raise AssertionError(name)
 
 try:
-    with serial.Serial(args.port, 115200, timeout=0.3, write_timeout=2) as device:
-        # Drain USB data queued before the host opened this port.
-        startup_deadline = time.monotonic()+2
-        while time.monotonic() < startup_deadline:
-            device.readline()
+    with serial.Serial(args.port,115200,timeout=.3,write_timeout=2) as device:
+        def drain(seconds=1):
+            end=time.monotonic()+seconds
+            while time.monotonic()<end: device.readline()
 
-        def command(text, marker='{'):
+        def cmd(text,marker='{'):
             device.reset_input_buffer()
-            device.write((text+'\n').encode())
-            device.flush()
-            deadline = time.monotonic()+4
-            while time.monotonic() < deadline:
-                line = device.readline().decode(errors='replace').strip()
-                if line.startswith(marker):
-                    return json.loads(line) if marker == '{' else line
-            raise TimeoutError(f'No response to {text!r}')
+            device.write((text+'\n').encode()); device.flush()
+            end=time.monotonic()+5
+            acknowledged=False
+            while time.monotonic()<end:
+                line=device.readline().decode(errors='replace').strip()
+                if line=='CMD': acknowledged=True
+                elif acknowledged and line.startswith(marker): return json.loads(line) if marker=='{' else line
+            raise TimeoutError(text)
 
-        command('cal default')
-        command('history clear')
-        s = command('reset')
-        check('Firmware identifies itself and has sensor disabled', s['app']=='breath-pet' and s['sensor']=='SIMULATED')
-        check('320x170 framebuffer and 8MB PSRAM initialized', s['display'] and (s['width'],s['height'])==(320,170) and s['psram']>=8000000)
-        check('NVS storage available', s['storage_ok'])
-        report['touch_controller'] = s['touch']
-        check('Default pet is happy', s['mood']=='HAPPY' and s['food']==75)
-        s = command('feed')
-        check('Feeding increases care meters', (s['food'],s['joy'],s['energy'],s['feeds'])==(90,90,95,1))
-        s = command('cycle'); check('Fake medium sample -> wobbly', s['sample']==45 and s['mood']=='WOBBLY')
-        s = command('cycle'); check('Fake high sample -> dizzy', s['sample']==85 and s['mood']=='DIZZY')
-        s = command('cycle'); check('Fake sample cycle returns to happy', s['sample']==0 and s['mood']=='HAPPY')
-        check('On-device logic and hardware self-test', command('selftest','SELFTEST').startswith('SELFTEST PASS'))
-        check('Invalid sample rejected', command('sample 999','ERROR').startswith('ERROR'))
-        check('Oversized serial input rejected', command('x'*80,'ERROR').startswith('ERROR'))
-        s = command('status'); check('Invalid input leaves sample unchanged',s['sample']==0)
-        before = command('reset')
-        # Includes one complete care tick and exercises continuous animation.
-        deadline = time.monotonic()+32
-        while time.monotonic() < deadline:
-            device.readline()
-        after = command('status')
-        check('Animation continues without reboot',after['frames']>before['frames']+200 and after['uptime_ms']>before['uptime_ms']+30000)
-        check('Timed care decay runs', (after['food'],after['joy'],after['energy'])==(73,79,89))
-        report['observed_status'] = after
-        for i in range(18):
-            command('sample '+str([0,45,85][i%3]))
-        history = command('history')['history']
-        check('History is capped at 16 newest samples',len(history)==16 and history[0]['raw']==85 and history[-1]['raw']==85 and history[0]['n']-history[-1]['n']==15)
-        command('sample 45')
-        s = command('cal zero')
-        check('Zero calibration removes the current baseline',s['zero']==45 and s['sample']==0)
-        s = command('sample 0')
-        check('Calibrated readings never go below zero',s['sample']==0)
-        s = command('sample 85')
-        check('Calibration applies to new readings',s['sample']==40)
-        s = command('cal minus')
-        check('Span changes sensitivity',s['span']==75 and s['sample']==53)
-        command('cal minus'); s = command('cal minus')
-        check('Calibrated score caps at 100',s['sample']==100 and s['span']==25)
-        s = command('cal minus'); check('Span lower bound',s['span']==25)
-        for _ in range(9): s = command('cal plus')
-        check('Span upper bound',s['span']==200)
-        history = command('history')['history']
-        check('Old readings preserve the score at capture',history[0]['raw']==85 and history[0]['score']==40)
-        for target,num in [('readings',1),('setup',2),('pet',0)]:
-            s = command('page '+target)
-            check('Page navigation: '+target,s['page']==num)
-        before = command('status')
-        command('reboot','REBOOT')
-        device.close()
-        time.sleep(2)
-        device.open()
-        drain = time.monotonic()+2
-        while time.monotonic()<drain: device.readline()
-        after = command('status')
-        check('Calibration survives a real reboot',after['zero']==45 and after['span']==200 and after['boot']==before['boot']+1)
-        check('History survives a real reboot',command('history')['history']==history)
-        command('cal default')
-        command('history clear')
-        for raw in (0,45,85): command('sample '+str(raw))
-        report['final_status'] = command('reset')
-        report['result'] = 'PASS'
-        report['physical_checks'] = 'Touch alignment and physical controls require observation by user; serial page tests do not prove touch alignment.'
+        drain(2)
+        cmd('night new CONFIRM'); cmd('cal default')
+        s=cmd('status')
+        check('Empty tank starts with Add Pet selected',s['players']==0 and s['page']=='tank' and s['selected']==-1 and s['cursor']==6)
+        check('Display, PSRAM and storage initialized',s['display'] and s['psram']>8000000 and s['storage_ok'])
+        check('All sample input is simulated',s['sensor']=='SIMULATED')
+        report['touch_controller']=s['touch']
+        s=cmd('ui select'); check('Add Pet opens nickname picker',s['page']=='name' and s['picker_name']=='CAPTAIN')
+        s=cmd('ui select'); check('Nickname selection opens pet picker',s['page']=='choose_pet')
+        s=cmd('ui next'); check('Pet picker cycles species',s['picker_pet']==1)
+        s=cmd('ui select'); check('Adoption assigns name and chosen pet',s['page']=='pet' and s['name']=='CAPTAIN' and s['pet_type']==1 and s['players']==1)
+        s=cmd('ui select'); check('Pet action opens Feed your pet',s['page']=='feed' and s['demo_raw']==25)
+        s=cmd('ui select'); check('Feed begins a timed sample',s['page']=='sampling')
+        drain(3.4); s=cmd('status')
+        check('Timed sample is captured once with capped benefit',s['page']=='result' and s['food']==85 and s['joy']==82 and s['health']==100 and s['feeds']==1)
+        check('Repeated feeding is rejected during cooldown',cmd('sample 85','ERROR').startswith('ERROR'))
+        s=cmd('status'); check('Rejected feed changes no state',s['feeds']==1 and s['health']==100)
+        s=cmd('history'); check('History records correct owner and score',s['owner']=='CAPTAIN' and len(s['history'])==1 and s['history'][0]['score']==25)
+        captain_history=s['history']
+        cmd('tank'); cmd('ui next'); s=cmd('ui select')
+        check('Taken nickname is skipped for next person',s['picker_name']=='GOOSE')
+        cmd('ui select'); s=cmd('ui select')
+        check('Second pet has independent fresh stats',s['name']=='GOOSE' and s['food']==70 and s['history_count']==0)
+        s=cmd('sample 85'); check('Overload damages only the selected pet',s['health']==83 and s['food']==73 and s['joy']==58 and s['score']==85)
+        goose_history=cmd('history')['history']
+        s=cmd('select 0'); check('Other person is unaffected',s['health']==100 and s['food']==85 and s['feeds']==1)
+        check('Other person history is unaffected',cmd('history')['history']==captain_history)
+        cmd('select 1'); s=cmd('rest'); check('Rest recovers health without a sample',s['health']==91 and s['feeds']==1)
+        s=cmd('rest'); check('Rest is debounced with cooldown',s['health']==91)
+        s=cmd('cal zero'); check('Calibration zero uses last fake raw sample',s['zero']==85)
+        s=cmd('cal minus'); check('Calibration span can change',s['span']==75)
+        check('Stored reading keeps score at capture',cmd('history')['history']==goose_history)
+        boot=s['boot']; cmd('reboot','REBOOT'); device.close(); time.sleep(2); device.open(); drain(2)
+        s=cmd('status'); check('Roster and calibration survive restart',s['players']==2 and s['zero']==85 and s['span']==75 and s['boot']==boot+1 and s['page']=='tank')
+        s=cmd('select 1'); check('Owner, pet stats and history persist',s['name']=='GOOSE' and s['health']==91 and cmd('history')['history']==goose_history)
+        cmd('select 0'); check('Both histories survive restart separately',cmd('history')['history']==captain_history)
+        for bad in ('select 9','select x','sample -1','sample 101','join BAD! 0','join TOOLONGNAME 0','join CAPTAIN 2','night new','x'*80):
+            check('Reject invalid input: '+bad[:25],cmd(bad,'ERROR').startswith('ERROR'))
+        for name,kind in [('BEAN',2),('CHAOS',3),('PICKLE',4),('NUGGET',5)]: s=cmd(f'join {name} {kind}')
+        check('Tank supports six separate players',s['players']==6)
+        check('Seventh player is rejected',cmd('join WAFFLES 0','ERROR').startswith('ERROR'))
+        check('Game rules, saturation and per-person ring-buffer self-test',cmd('selftest','SELFTEST').startswith('SELFTEST PASS'))
+        cmd('cal default'); cmd('tank')
+        before=cmd('status'); drain(3); after=cmd('status')
+        check('Full tank animates without reboot',after['frames']>before['frames']+20 and after['boot']==before['boot'])
+        # Verify explicit destructive confirmation and a safe default.
+        cmd('ui menu'); cmd('ui next'); cmd('ui next'); s=cmd('ui select')
+        check('New evening opens confirmation with keep selected',s['page']=='new_night' and s['cursor']==0)
+        s=cmd('ui select'); check('Default confirmation preserves all pets',s['players']==6 and s['page']=='menu')
+        if not args.keep_demo_roster:
+            cmd('ui select') # Back to tank (menu reset cursor is zero).
+            cmd('night new CONFIRM')
+            s=cmd('status'); check('Confirmed new evening clears roster',s['players']==0 and s['page']=='tank')
+        else: cmd('tank')
+        report['final_status']=cmd('status')
+        report['result']='PASS'
+        report['physical_checks']='Serial UI commands exercise the same handlers as physical buttons; screen and actual buttons still need a user check. Touch is not implied by passing tests.'
 except Exception as exc:
-    report['result'] = 'FAIL'
-    report['error'] = str(exc)
-    raise
+    report['result']='FAIL'; report['error']=str(exc); raise
 finally:
-    output = Path(__file__).resolve().parents[1]/'test-results.json'
+    output=Path(__file__).resolve().parents[1]/'test-results.json'
     output.write_text(json.dumps(report,indent=2)+'\n')
     print(f'Report: {output}',flush=True)

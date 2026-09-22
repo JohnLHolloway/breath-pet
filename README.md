@@ -1,36 +1,58 @@
 # Breath Pet
 
-A small virtual pet for the **LILYGO T-Display-S3** (ESP32-S3, 1.9-inch ST7789, 170×320). Animated pixel creature, food/joy/energy meters, saved sample history, and calibration controls. Runs from USB power without Wi-Fi or additional wiring.
+A pocket party pet tank for the **LILYGO T-Display-S3**, with a 1.9-inch ST7789 screen. Friends pick a nickname, adopt a pet for the evening, and watch everyone's pets swim around together.
 
-**Prototype: MQ-3 input is disabled. Every sample is simulated, in arbitrary game units. This software does not measure alcohol or BAC.**
+![Empty tank with Add Pet selected](docs/empty-tank.png)
 
-## Screens
+![Example tank after six demo pets have been adopted](docs/swimming-tank.png)
 
-- **Pet:** tap the creature to feed it. Tap the meters to capture the next fake sample (0 → 45 → 85 → 0). The pet reacts to the calibrated score with happy, wobbly, or dizzy expressions.
-- **Readings:** the latest 16 simulated samples, newest first, with raw input and the score at capture. Prev/Next page through them. Clear history requires a second tap.
-- **Setup:** Zero current stores the selected fake input as the baseline. Span −25/+25 adjusts sensitivity (25–200); a smaller span increases the score. Defaults restores zero=0, span=100. These settings exercise the software workflow; they do not calibrate a real MQ-3.
+**Current build: all breath samples are simulated. No MQ-3 input or BAC measurement is enabled.**
 
-Tap the bottom tabs to switch screens on a supported touch board. Firmware probes both CST816-family (0x15) and CST328 (0x1A) controllers on SDA18/SCL17, with reset21 and interrupt16. Touch uses LILYGO's coordinate swap for landscape. **Touch functionality and alignment must be checked on the physical board; the standard non-touch version has the same LCD.**
+## Join the evening
 
-## Button controls
+The tank starts empty. Choose **Add Pet**, choose a nickname, then adopt a species. Up to six people can join, one at a time. Existing pets swim freely around a shared aquarium; there are no placeholder pets or individual boxes.
 
-Every feature is also available with the two front buttons:
+Nicknames include Captain, Goose, Bean, Chaos, Pickle, Nugget, Bubbles, Spud, Mochi, Gremlin, Waffles, Noodle, Goblin, Peach, Squid and Biscuit. Used names are skipped to avoid confusing people's readings. Species are Blob, Axolotl, Bat, Cat, Ghost and Frog.
 
-| Action | BOOT / GPIO0 | Other button / GPIO14 |
+Choose a swimming pet to open its care screen:
+
+- **Feed:** select a fake input (0, 25, 50 or 85), then Start demo. A three-second sample animation produces a result for that pet only.
+- **History:** that pet's last 16 samples, including the input, game score and health change.
+- **Rest:** recover health without taking a sample.
+
+The roster, species, care stats, calibration and each person's history survive restarts. **Menu → Start a new evening** clears pets and history only after confirmation; Keep pets is selected by default. Calibration settings are retained. The previous solo prototype's saved data is left under its old NVS key and is not assigned to anyone in the new game.
+
+## Two-button controls
+
+| Button | Tap | Hold for 1.2 seconds |
 | --- | --- | --- |
-| Pet screen, tap | Feed | Capture next fake sample |
-| Readings or Setup, tap | Activate the outlined option | Move the outline to the next option |
-| Hold for 1.2 seconds | Reset pet on Pet; return to Pet elsewhere | Next screen |
+| **GPIO14** (non-BOOT front button) | Next option, nickname, pet or demo value | Open evening menu |
+| **BOOT / GPIO0** | Select, adopt or start | Back / cancel |
 
-Taps trigger on release. Holding BOOT **during power-up** enters firmware download mode; the hold gestures above apply while the application is running.
+The bottom of each screen shows the relevant controls. In the tank, selection cycles through existing pets, Add Pet and Menu. Six is the capacity, not the starting population. A golden ring marks the selected swimming pet. BOOT during power-up still enters firmware download mode.
 
-Food, joy, and energy decay every 30 seconds; feeding replenishes them. The pet itself resets on restart. History and calibration settings survive restarts in NVS. Resetting the pet does not erase history or calibration.
+Touch uses the same flows when a supported controller responds. Firmware probes CST816-family (0x15) and CST328 (0x1A) on SDA18/SCL17, reset21 and interrupt16. **The currently tested board does not respond to either address or the full I2C scan, and the user reports that touch does not work.** Everything is operable with buttons. Screen rendering does not prove touch hardware is present; LILYGO sells both variants.
 
-## What gets saved
+## Game rules — not alcohol units
 
-The most recent 16 samples store a sequence number, raw fake input, calibrated score, boot number, and seconds since that boot. There is no real-time clock or network time: boot/seconds are session-relative labels, not dates or times of day. Old scores are preserved when calibration changes. Settings and history write only on user actions, with one additional boot-counter write per restart.
+The score is `clamp((fake_input - zero) * 100 / span, 0, 100)`. It is a fictional game value, never BAC.
 
-The demo score is `clamp((raw - zero) * 100 / span, 0, 100)`, using integer arithmetic. Simulated thresholds are 30 for wobbly and 70 for dizzy. This has no physical alcohol units. MQ-3 wiring, warm-up, raw acquisition, and actual sensor characterization remain future work.
+- Score **0**: +8 food, +6 joy. Anyone can play without alcohol.
+- Score **1–69**: +15 food, +12 joy; the reward is capped across this range.
+- Score **70–100**: overload; +3 food, −12 joy, and health damage `10 + floor((score - 70) / 2)`.
+- Stats stay within 0–100. Rest adds up to 8 health and 4 joy, and clears the overload expression.
+- Each pet has a five-second feeding cooldown and ten-second rest cooldown to prevent repeat-button accidents.
+- While powered, food and joy decay by one per minute; an empty food meter also costs one health. There is no offline decay.
+
+Menu → Demo calibration changes the fake-input baseline and span (25–200). It exercises the software response only. Earlier history entries keep the score and damage recorded at capture.
+
+Samples carry a global sequence number plus boot number and seconds since that boot. These are session labels, not wall-clock timestamps. No Wi-Fi, network account, or external service is involved in gameplay.
+
+## MQ-3 readiness
+
+The game, ownership and timed feed workflow are ready to connect to an input backend. **The actual ADC acquisition, stable-baseline detection and sensor calibration are still pending.** The firmware never reads a sensor pin or presents a simulated value as measured alcohol.
+
+The intended module is the [ACEIRMC MQ-3 board](https://www.amazon.com/dp/B0978KZQVY). See [MQ3_WIRING.md](MQ3_WIRING.md) for the proposed 5 V supply, analog divider and GPIO1 connection. Confirm the resistors and physical wiring before enabling a sensor backend. Sensor response will need characterization; this prototype does not convert it to BAC.
 
 ## Build and upload
 
@@ -42,47 +64,46 @@ Install Python and Git, clone this repository, then run from its directory:
 .\dev.ps1 monitor -Port COM3
 ```
 
-The helper creates a project-local `.venv` on first use and installs pinned development tools. PlatformIO downloads compilers into `.cache/platformio`; build products go into `.pio`. Both directories are ignored by Git. If PowerShell blocks local scripts, use `powershell -ExecutionPolicy Bypass -File .\dev.ps1 build` for that invocation.
+The helper creates a local `.venv` on first use. Build products go into `.pio` and compiler downloads into `.cache/platformio`; both are ignored by Git. For an existing environment after pulling changes, run `.venv\Scripts\python.exe -m pip install -r requirements-dev.txt`.
 
-On other operating systems:
+If PowerShell blocks scripts, use `powershell -ExecutionPolicy Bypass -File .\dev.ps1 build` for that invocation. Close the monitor before flashing; Ctrl+C exits it. If upload cannot connect, hold BOOT, press/release RST, release BOOT, and retry. Press RST afterward if needed.
 
-```sh
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements-dev.txt
-pio run
-pio run -t upload --upload-port /dev/ttyACM0
-```
+On Linux/macOS, create and activate a Python virtual environment, install `requirements-dev.txt`, then use `pio run` and `pio run -t upload --upload-port <your-port>`.
 
-Change the port to match your machine. Close any serial monitor before flashing or testing. If upload cannot connect, hold BOOT, press/release RST, release BOOT, then upload. Press RST afterward if needed.
+The build pins `espressif32@6.5.0` / Arduino-ESP32 2.0.14, following LILYGO's working parallel TFT setup. Display power: GPIO15; backlight: GPIO38; buttons: GPIO0/GPIO14. Hardware: 16MB flash, 8MB OPI PSRAM.
 
-The build pins `espressif32@6.5.0` / Arduino-ESP32 2.0.14, following LILYGO's known-working setup for this parallel TFT. Display power is GPIO15, backlight GPIO38, buttons GPIO0/GPIO14. The board has 16MB flash and 8MB OPI PSRAM. No sensor pin is configured.
-
-## Device tests and serial interface
+## Tests and diagnostics
 
 ```powershell
-# Replaces saved fake readings/settings, reboots the board, then leaves three demo samples.
+# Replaces the current evening, tests fake pets and samples, then leaves an empty tank.
 .\dev.ps1 test -Port COM3 -ResetDemoData
 ```
 
-The integration test checks rendering progress, stat changes and bounds, sample reactions, invalid commands, history rollover, calibration boundaries, navigation, and NVS persistence across a real reboot. Tests save an ignored `test-results.json`. Touch detection is reported separately: successful serial page navigation does not prove touch alignment.
+The device test drives the same handlers as the physical buttons. It checks adoption, taken-name skipping, six-player capacity, timed feeding, cooldowns, owner isolation, overload/recovery, input validation, persistent stats/history and calibration, animation, and new-evening confirmation. A separate on-device test exercises stat bounds and per-person history rollover. Test output is saved to ignored `test-results.json`.
 
-At 115200 baud, send newline-terminated commands:
+Newline-terminated serial commands at 115200 baud:
 
 ```text
-status                 feed                  cycle
-sample 0               sample 45             sample 85
-reset                  selftest              help
-history                history clear
-cal zero               cal default           cal minus            cal plus
-page pet               page readings         page setup
-touchscan              reboot
+status                   selftest                 touchscan
+join CAPTAIN 0           select 0                 history
+sample 25                rest                     tank
+ui next                  ui select                ui back             ui menu
+cal zero                 cal default              cal minus           cal plus
+night new CONFIRM        screen                   reboot
 ```
 
-Status repeats every five seconds as JSON. It includes touch controller, touch/button counters, screen, memory, calibration and storage health. `touchscan` resets/probes the touch hardware and scans the I2C bus. `reboot` restarts the device. The serial connection is optional; gameplay does not wait for a host.
+`join` accepts a unique 1–8-character alphanumeric nickname and a species index 0–5. `select` takes an occupied slot 0–5. `sample` accepts fake units 0–100 and observes the selected pet's cooldown. `night new CONFIRM` clears the evening. A `CMD` line precedes each command's reply, separating it from unsolicited status JSON.
 
-## Source and licensing
+`screen` exports the actual RGB565 framebuffer, useful for layout QA but not a physical panel readback. For example:
 
-Original project code is MIT licensed. The trimmed TFT_eSPI 2.5.43 and TouchLib libraries, board definition, and updated ST7789 panel initialization come from [LILYGO's T-Display-S3 repository](https://github.com/Xinyuan-LilyGO/T-Display-S3), commit `ec889e789b3cf093412689a143f7f37b42b56af7`. Vendor license notices remain in `lib/`.
+```powershell
+.venv\Scripts\python.exe tools\capture_screen.py artifacts\tank.png --command tank
+```
 
-No factory flash dump, local logs, or saved readings are included. LILYGO supplies [factory firmware](https://github.com/Xinyuan-LilyGO/T-Display-S3/tree/main/firmware) if you want to return to its demo.
+## Files and licensing
+
+`src/party.h` holds per-person state, persistence and game rules. `src/main.cpp` handles navigation, input and feeding. `src/ui.h` draws the screens. `src/hardware.h` contains the display initialization, button debouncing and touch drivers.
+
+Original code is MIT licensed. TFT_eSPI 2.5.43, TouchLib, the board definition and ST7789 initialization come from [LILYGO's T-Display-S3 repository](https://github.com/Xinyuan-LilyGO/T-Display-S3), commit `ec889e789b3cf093412689a143f7f37b42b56af7`, with vendor licenses retained in `lib/`.
+
+No factory flash dump, local logs or saved player readings are published. LILYGO provides [factory firmware](https://github.com/Xinyuan-LilyGO/T-Display-S3/tree/main/firmware).

@@ -1,10 +1,11 @@
 # Hardware verification — 2026-09-22
 
-Tested on a USB-connected LILYGO T-Display-S3: ESP32-S3 revision 0.2, 16MB flash, approximately 8MB PSRAM. Firmware compiled and flashed successfully, with flash data hash verification.
+Tested on a USB-connected LILYGO T-Display-S3: ESP32-S3 revision 0.2, 16MB flash, approximately 8MB PSRAM. Party firmware compiled and flashed successfully, including flash hash verification.
 
-- The user confirmed the animated pet was visible and both physical buttons worked in the first version.
-- The expanded version passed all **28 automated device checks**, including a 32-second animation/decay run, simulated reactions, input validation, calibration bounds, 16-entry history rollover, and history/settings persistence across an actual reboot.
-- The device test leaves default calibration, a reset pet, and three explicitly simulated samples (0, 45, 85) for browsing.
-- **Touch remains unverified on this board.** Resetting GPIO21 and scanning the I2C bus on SDA18/SCL17 returned no device, including at 0x15 and 0x1A. No physical touch event has been observed. This may be the non-touch variant; do not treat the successful rendering or serial navigation tests as evidence that touch works. Both vendor touch-controller families are supported in the source, but need testing on responding hardware.
-- All screens can be operated with the buttons. The extended button menu navigation still needs a user check.
-- No MQ-3 is wired or sampled; no actual alcohol measurement or sensor calibration has been performed.
+The version 3 party implementation passed **42 automated device checks**. These exercise the actual button action handlers: empty tank/Add Pet, nickname/species selection, timed feeding, duplicate-input cooldown, per-person history and stat isolation, overload damage, rest, calibration, persistence across a real reboot, malformed inputs, six-person capacity, animation and new-evening confirmation. The on-device self-test also checks stat bounds, capped rewards, calibration bounds and a separate 16-record history ring for each pet.
+
+The final UI review used the ESP32's rendered framebuffer for the empty tank, populated swimming tank, nickname picker, species picker, selected pet, feed prompt, overload result and personal history. These captures verify layout, not physical panel or touch behavior. Tests and captures used only fictional nicknames and fake inputs. The test roster was cleared afterward.
+
+The user confirmed the original physical pet display and both buttons worked. The new Add Pet flow is available for user verification. No touch controller responded at either expected address or elsewhere on the I2C bus after reset, and the user reports touch does not work. This may be the non-touch variant; hardware presence/alignment remain unverified. The application remains fully usable through the two buttons.
+
+No MQ-3 has been wired, read or calibrated. The module listing and proposed GPIO1 divider wiring were checked, but resistor values and physical wiring still need confirmation. All calibration in this build is explicitly for simulated game input.
