@@ -128,7 +128,7 @@ void drawFeed(uint32_t now) {
       int w=min(258,int((now-samplingStart)*258/12000)); if(w>0) frame.fillRoundRect(55,145,max(4,w),12,4,MINT);
     } else {
       center("KEEP CUP AWAY",184,78,GOLD,2);
-      const char *hint=!mq3.count?"Checking sensor...":!sensorFeed.recovered(mq3)?"Let sensor recover in clean air":!mq3.canZero()?mq3.condition():mq3.spread()>25?"Wait for signal to settle":"Ready: press OK, then bring cup";
+      const char *hint=!mq3.count?"Checking sensor...":(mq3.millivolts>MQ3_CLEAN_MAX_MV || !sensorFeed.recovered(mq3))?"Wait below 250 mV in clean air":!mq3.canZero()?mq3.condition():!sensorFeed.ready(mq3)?"Wait for clean-air window":"Ready: press OK, then bring cup";
       center(hint,184,106,MUTED,1);
       action(sensorFeed.ready(mq3)?"Start live feed":"Wait for clean air");
     }
@@ -210,7 +210,7 @@ void drawCalibration() {
     header("GAME RESPONSE"); char line[32]; snprintf(line,sizeof(line),"%u mV",storage.data.sensorSpanMv);
     center(line,184,68,MINT,4); center("Rise above 20mV noise allowance",184,100,MUTED,1);
     center("Full-scale game score / not BAC",184,118,MUTED,1);
-    const char *actions[]={"More responsive","Less responsive","Default (600 mV)","Back to menu"}; action(actions[cursor],cursor,4); return;
+    const char *actions[]={"More responsive","Less responsive","Default (1200 mV)","Back to menu"}; action(actions[cursor],cursor,4); return;
   }
   header("DEMO CALIBRATION");
   char line[48]; snprintf(line,sizeof(line),"RAW %d     ZERO %u",lastRaw,storage.data.zero); center(line,184,51,MUTED,2);

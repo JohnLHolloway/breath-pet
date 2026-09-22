@@ -8,6 +8,7 @@
 
 constexpr int MAX_PLAYERS=6, HISTORY_SIZE=16, PET_TYPES=6;
 constexpr uint32_t FEED_COOLDOWN_MS=5000;
+constexpr int MQ3_CLEAN_MAX_MV=250, MQ3_RESPONSE_MIN_MV=400, MQ3_DEFAULT_SPAN_MV=1200;
 const char *const PET_NAMES[]={"BLOB","AXOLOTL","BAT","CAT","GHOST","FROG"};
 const char *const PICKER_NAMES[]={"CAPTAIN","GOOSE","BEAN","CHAOS","PICKLE","NUGGET","BUBBLES","SPUD","MOCHI","GREMLIN","WAFFLES","NOODLE","GOBLIN","PEACH","SQUID","BISCUIT"};
 constexpr int NAME_COUNT=sizeof(PICKER_NAMES)/sizeof(PICKER_NAMES[0]);
@@ -40,13 +41,13 @@ struct Player {
 struct PartyData {
   uint32_t magic=0x42505433,version=2,boot=0,night=1,sequence=0;
   uint16_t zero=0,span=100;
-  uint16_t sensorSpanMv=600;
+  uint16_t sensorSpanMv=MQ3_DEFAULT_SPAN_MV;
   Player players[MAX_PLAYERS];
 };
 
 // Fictional game units, never BAC. Zero feeds too; the benefit is capped.
 inline int gameScore(int raw,int zero,int span) { return constrain((raw-zero)*100/max(25,span),0,100); }
-inline int sensorScore(int baseline,int peak,int span) { return constrain(max(0,peak-baseline-20)*100/max(100,span),0,100); }
+inline int sensorScore(int baseline,int peak,int span) { return peak<MQ3_RESPONSE_MIN_MV?0:constrain(max(0,peak-baseline-20)*100/max(100,span),0,100); }
 inline int feedPlayer(Player &p,int score) {
   int previous=p.health;
   if (score>=70) {

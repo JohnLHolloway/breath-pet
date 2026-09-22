@@ -37,7 +37,11 @@ Touch uses the same flows when a supported controller responds. Firmware probes 
 
 ## Game rules — not alcohol units
 
-Live score is `clamp(max(0, peak_mV - baseline_mV - 20) * 100 / sensor_span_mV, 0, 100)`. The initial span is 600 mV, so a 300 mV rise gives 46 game units. The 20 mV allowance suppresses small fluctuations. This is an initial game mapping based on a cup response, not alcohol or BAC calibration.
+The provisional clean-air band is **50�250 mV at GPIO1**. A peak of **251�399 mV** is an uncertain response and scores zero; **400 mV or more** enables response scoring. Below 400 mV, a clean-air/weak-response feeding still gives the normal zero-score reward.
+
+At or above 400 mV, live score is `clamp(max(0, peak_mV - baseline_mV - 20) * 100 / sensor_span_mV, 0, 100)`. The default span is now **1200 mV**, twice the previous range, so the same response scores about half as much. For the observed baseline of 139 mV and cup peak of 852 mV, the new score is **57** instead of 100: feeding without damage. With that baseline, overload starts at 999 mV (score 70). The threshold moves with the fresh baseline and response setting; 400 mV is not the overload threshold.
+
+These thresholds are provisional game settings for this sensor/divider setup, not evidence that someone drank or a BAC calibration. The 20 mV allowance suppresses small fluctuations.
 
 Demo mode retains `clamp((fake_input - zero) * 100 / span, 0, 100)`. Demo and live settings are independent.
 
@@ -48,19 +52,19 @@ Demo mode retains `clamp((fake_input - zero) * 100 / span, 0, 100)`. Demo and li
 - Each pet has a five-second feeding cooldown and ten-second rest cooldown to prevent repeat-button accidents.
 - While powered, food and joy decay by one per minute; an empty food meter also costs one health. There is no offline decay.
 
-Menu → Response settings adjusts live span from 100–2000 mV in 100 mV steps, or restores 600 mV. More responsive reduces span; less responsive increases it. Earlier records retain their original scale and result. Menu → Change input mode toggles live/demo for the current boot; normal firmware boots into live mode. In demo mode, Response settings retains the fake zero/span controls (25–200).
+Menu → Response settings adjusts live span from 100–2000 mV in 100 mV steps, or restores 1200 mV. More responsive reduces span; less responsive increases it. Existing saved settings survive firmware updates; choose Default to apply the new 1200 mV scale. Earlier records retain their original scale and result. Menu → Change input mode toggles live/demo for the current boot; normal firmware boots into live mode. In demo mode, Response settings retains the fake zero/span controls (25–200).
 
 Samples carry a global sequence number plus boot number and seconds since that boot. These are session labels, not wall-clock timestamps. No Wi-Fi, network account, or external service is involved in gameplay.
 
 ## Live feeding and recovery
 
 1. Choose a pet and Feed your pet. Keep the cup away in clean air.
-2. The screen collects a fresh 100-sample window (at least ten seconds). It requires GPIO1 between 50 and 2700 mV and a window spread no greater than 25 mV.
+2. The screen collects a fresh 100-sample window (at least ten seconds). Every sample must be between 50 and 250 mV, with a window spread no greater than 25 mV.
 3. When ready, press OK, then bring cup vapor near the dry sensor for 5–10 seconds. The full capture lasts 12 seconds; its fresh-air baseline stays frozen.
 4. The peak rise determines the game score. A clean-air capture with no rise gives a score of zero and still feeds the pet; alcohol is not required.
-5. Remove the cup. The next feeding also waits for a quiet window within 30 mV above the previous baseline. This recovery check is global across pets and remains after cancelling a capture. Recovery may take a minute or longer.
+5. Remove the cup. The next feeding waits for another full quiet window in the 50�250 mV clean-air band. This applies to every pet, including after cancelling, and allows normal baseline drift within that band. Recovery may take a minute or longer.
 
-Holding Back or Menu cancels without a history entry. Readings below 20 mV or above 2700 mV during capture, or fewer than 80 acquired samples, reject the capture without changing pet stats. These checks cannot detect every wiring fault. Fresh air must actually be clean air; a stable alcohol plume cannot be automatically identified as a bad baseline. Recovery state is temporary and resets on reboot, so always follow the clean-air prompt after power-up.
+Holding Back or Menu cancels without a history entry. Readings below 20 mV or above 2700 mV during capture, or fewer than 80 acquired samples, reject the capture without changing pet stats. These checks cannot detect every wiring fault. Fresh air must actually be clean air; a stable alcohol plume cannot be automatically identified as a bad baseline. The fresh clean-air window is required after power-up too; a stable reading above 250 mV cannot start a feeding.
 
 **Menu → MQ-3 setup** remains a live-voltage bench monitor with its own temporary zero, independent of feeding. The hardware cup test observed about 107 mV in clean air, 414 mV after sake exposure, and 106 mV after removal. This is qualitative response/recovery evidence; it is not concentration calibration.
 
@@ -108,7 +112,7 @@ sensor open              sensor zero              sensor clear
 input live               input demo
 ```
 
-`join` accepts a unique 1–8-character alphanumeric nickname and a species index 0–5. `select` takes an occupied slot 0–5. `sample` accepts fake units 0–100 only in demo mode and observes the selected pet's cooldown. `night new CONFIRM` clears the evening. A `CMD` line precedes each command's reply, separating it from unsolicited status JSON. Automated clients can send `@123 status`: the acknowledgement becomes `CMD 123`, and status/history JSON echoes `request_id: 123`. Unsolicited status has request ID zero. Match IDs before accepting a reply; recover missing replies with a read-only status/history query rather than repeating an action. In live mode, `cal minus`/`cal plus` decrease/increase the span, `cal default` restores 600 mV, and `cal zero` is rejected because each feeding captures its own baseline.
+`join` accepts a unique 1–8-character alphanumeric nickname and a species index 0–5. `select` takes an occupied slot 0–5. `sample` accepts fake units 0–100 only in demo mode and observes the selected pet's cooldown. `night new CONFIRM` clears the evening. A `CMD` line precedes each command's reply, separating it from unsolicited status JSON. Automated clients can send `@123 status`: the acknowledgement becomes `CMD 123`, and status/history JSON echoes `request_id: 123`. Unsolicited status has request ID zero. Match IDs before accepting a reply; recover missing replies with a read-only status/history query rather than repeating an action. In live mode, `cal minus`/`cal plus` decrease/increase the span, `cal default` restores 1200 mV, and `cal zero` is rejected because each feeding captures its own baseline.
 
 `screen` exports the actual RGB565 framebuffer, useful for layout QA but not a physical panel readback. For example:
 

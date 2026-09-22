@@ -68,8 +68,13 @@ struct SensorFeed {
   bool running=false,invalid=false,needsRecovery=false;
   int baseline=0,peak=0,samples=0;
   uint32_t started=0;
-  bool recovered(const Mq3Monitor &m) const { return !needsRecovery || m.mean()<=baseline+30; }
-  bool ready(const Mq3Monitor &m) const { return m.canZero() && m.spread()<=25 && recovered(m); }
+  bool recovered(const Mq3Monitor &m) const { return !needsRecovery || (m.millivolts<=MQ3_CLEAN_MAX_MV && m.mean()<=MQ3_CLEAN_MAX_MV); }
+  bool ready(const Mq3Monitor &m) const {
+    if(!m.canZero() || m.spread()>25) return false;
+    // Every sample in the fresh window must be inside the clean-air band.
+    for(int i=0;i<m.count;i++) if(m.readings[i]<50 || m.readings[i]>MQ3_CLEAN_MAX_MV) return false;
+    return true;
+  }
   bool start(const Mq3Monitor &m,uint32_t now) {
     if(!ready(m)) return false;
     baseline=m.mean(); peak=baseline; samples=0; invalid=false;
