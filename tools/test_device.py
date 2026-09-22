@@ -100,6 +100,15 @@ try:
         cmd('ui menu'); cmd('ui next'); cmd('ui next'); s=cmd('ui select')
         check('New evening opens confirmation with keep selected',s['page']=='new_night' and s['cursor']==0)
         s=cmd('ui select'); check('Default confirmation preserves all pets',s['players']==6 and s['page']=='menu')
+        cmd('ui next'); cmd('ui next'); cmd('ui next'); s=cmd('ui select')
+        check('Shared menu selector opens MQ-3 bench test',s['page']=='sensor' and s['mq3_active'])
+        check('Early sensor baseline is rejected',cmd('sensor zero','ERROR').startswith('ERROR'))
+        drain(1.2); s=cmd('status')
+        check('Sensor monitor samples ADC while game input stays simulated',s['mq3_samples']>=8 and 0<=s['mq3_adc']<=4095 and 0<=s['mq3_mv']<=3300 and s['sensor']=='SIMULATED')
+        check('Bench readings never create pet history',s['feeds']==0 and s['history_count']==0)
+        cmd('ui next'); s=cmd('ui select'); check('Baseline clear action leaves no zero',s['mq3_baseline_mv']==-1)
+        cmd('ui next'); s=cmd('ui select'); check('Monitor exit stops acquisition',s['page']=='menu' and not s['mq3_active'])
+        n=s['mq3_samples']; drain(.3); check('ADC stays stopped outside bench screen',cmd('status')['mq3_samples']==n)
         if not args.keep_demo_roster:
             cmd('ui select') # Back to tank (menu reset cursor is zero).
             cmd('night new CONFIRM')

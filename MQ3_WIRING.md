@@ -1,8 +1,12 @@
-# Planned MQ-3 input — not enabled yet
+# MQ-3 wiring and clean-air bench test
 
 The ACEIRMC module's listing specifies **5 V VCC**, GND, AO (analog output) and DO (threshold output). We want **AO**, since DO only indicates whether a threshold was crossed. Follow the labels on your actual board, not an assumed header order. [Module listing](https://www.amazon.com/dp/B0978KZQVY)
 
-## Proposed USB-powered wiring
+![MQ-3 wiring with eight 2 kohm resistors](docs/mq3-wiring.png)
+
+Dots mark electrical connections; wire crossings without dots are not connected. This is a logical wiring diagram, not physical header order.
+
+## USB-powered wiring
 
 Power off before wiring. The user has nine 2 kΩ resistors. Use **eight of them**: four in series form the upper 8 kΩ resistance, and four more in series form the lower 8 kΩ resistance. One resistor remains spare. This gives the same 1:2 voltage division as the previously proposed pair of 10 kΩ resistors.
 
@@ -21,15 +25,35 @@ MQ-3 AO -- 2k -- 2k -- 2k -- 2k --+-- GPIO1 (ADC1_CH0)
 
 Equal resistor values halve the analog voltage: a 5 V module output becomes 2.5 V at GPIO1. **Do not connect AO directly to an ESP32 input.** Configure that ADC input for its widest attenuation range; Espressif documents up to approximately 3.1 V for the ESP32-S3 at 11 dB. [Espressif ADC documentation](https://docs.espressif.com/projects/arduino-esp32/en/latest/api/adc.html)
 
-GPIO1 is exposed as ADC1_CH0 on LILYGO's header and is unused by this firmware. The sensor's heater should use the 5 V supply, not a GPIO or the 3 V pin. [LILYGO pin map](https://github.com/Xinyuan-LilyGO/T-Display-S3/blob/main/image/T-DISPLAY-S3-TOUCH.png)
+GPIO1 is exposed as ADC1_CH0 on LILYGO's header and is used by the MQ-3 bench monitor. The sensor's heater should use the 5 V supply, not a GPIO or the 3 V pin. [LILYGO pin map](https://github.com/Xinyuan-LilyGO/T-Display-S3/blob/main/image/T-DISPLAY-S3-TOUCH.png)
 
 A typical four-band 2 kΩ resistor is **red–black–red**, followed by its tolerance band (often gold). Verify resistance with a meter when available; other band counts use a different reading scheme. Resistor values have been reported by the user; physical wiring has not been verified.
 
-## Remaining implementation and testing
+## Check with your multimeter first
 
-1. Confirm the module labels and divider values; measure the divider output before attaching GPIO1.
-2. Add ADC acquisition and a distinct sensor mode, keeping raw sensor readings separate from fake game units.
-3. Condition/warm the sensor and observe a stable clean-air baseline. Initial conditioning is substantial: the Winsen MQ-3 manual specifies more than 48 hours under its standard test conditions. The exact sensor fitted to this reseller module is unverified, so follow its own datasheet when available. [Winsen MQ-3 manual](https://cdn.sparkfun.com/datasheets/Sensors/Biometric/MQ-3%20ver1.3%20-%20Manual.pdf)
-4. Record raw and baseline-relative response through the timed feeding flow, test repeatability and recovery, then choose a game-response mapping.
+1. Unplug USB. Assemble the two four-resistor series chains, power and common ground as shown. Leave the GPIO1 connection off.
+2. Power the board and module by USB. Use DC voltage mode, with the black probe on common GND.
+3. Measure AO and then the marked divider junction. The junction should be approximately half of AO and no higher than about 2.6 V on this 5 V setup. If it is not, disconnect power and check the resistor connections. A reading of zero at both points does not establish that the divider is correct; check the unpowered resistor chains or test the divider against a known 5 V source with GPIO1 still disconnected.
+4. Unplug USB again, connect the verified junction to GPIO1, then reconnect USB.
 
-The current zero/span screen calibrates only simulated game input. It is not a sensor calibration, and the MQ-3 response is not being converted into BAC. The current firmware never calls `analogRead`.
+Never connect the module's AO or DO directly to an ESP32 input. The sensor heater normally gets hot; keep it clear of loose wires and flammable material. Use the printed 5V pin, not 3V.
+
+## Test without drinking
+
+Hold the lower button to open the evening menu. Press NEXT until **MQ-3 setup**, then OK.
+
+The monitor shows actual GPIO1 millivolts, raw 12-bit ADC counts, a fixed 0-3100 mV trend graph, and elapsed time since opening the screen. This timer is **not** verified heater warm-up time. The ADC uses 11 dB attenuation and averages four conversions every 100 ms. It runs only while this screen is open.
+
+Leave the sensor in clean air. The first ten seconds fill a 100-sample window. **Zero in clean air** accepts a temporary baseline only when the latest reading is between 50 and 2700 mV and the window spread is at most 50 mV. These are bench-test checks, not a sensor-readiness or accuracy guarantee. A quiet floating input can still look plausible; verify the actual wiring with the meter. Low or high input prompts a wiring check.
+
+Once zeroed, the screen shows change from the window average in millivolts. NEXT cycles through Zero in clean air, Clear air baseline, and Back to menu; OK performs the selected action. Hold the upper button to return. Reopening the monitor or rebooting starts a fresh window and clears the temporary baseline.
+
+No drinking is required to verify power, divider voltage, ADC operation or clean-air drift. Normal breath can change humidity as well as the reading; that is not proof of alcohol detection. We have not yet verified this module's alcohol response.
+
+Brand-new sensors need conditioning before repeatable comparisons. The Winsen MQ-3 manual specifies more than 48 hours of preheat under its standard test conditions. The exact sensor on this reseller module is unverified, so use its own datasheet when available. A quiet ten-second trace is not a substitute for conditioning. [Winsen MQ-3 manual](https://cdn.sparkfun.com/datasheets/Sensors/Biometric/MQ-3%20ver1.3%20-%20Manual.pdf)
+
+## What is and is not enabled
+
+**Enabled:** live ADC bench readings, voltage trend, input-range/drift checks, temporary clean-air zero, and serial diagnostics (`sensor open`, `sensor zero`, `sensor clear`). Status fields include `mq3_active`, `mq3_mv`, `mq3_adc`, `mq3_samples`, `mq3_spread_mv`, `mq3_can_zero` and `mq3_baseline_mv` (-1 means unset).
+
+**Still simulated:** pet feeding, pet history and the demo zero/span calibration. Bench readings never alter pet stats or enter personal histories. Connecting real sensor samples to feeding requires verifying wiring, conditioning, response and recovery, then selecting a game-response mapping. No BAC conversion is implemented.

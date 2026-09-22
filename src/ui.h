@@ -11,7 +11,7 @@ void center(const char *s,int x,int y,uint16_t color=INK,int font=2) {
   frame.setTextDatum(MC_DATUM); frame.setTextColor(color); frame.drawString(s,x,y,font); frame.setTextDatum(TL_DATUM);
 }
 void header(const char *title) {
-  text(title,55,7,MINT,2); text(BREATH_PET_TEST_MODE?"TEST":"DEMO",287,12,GOLD,1);
+  text(title,55,7,MINT,2); text(BREATH_PET_TEST_MODE?"TEST":(page==SENSOR?"LIVE":"DEMO"),287,12,GOLD,1);
   frame.drawFastHLine(54,30,259,LINE);
 }
 // The rail lines up with the two physical buttons, with the device held landscape.
@@ -26,13 +26,12 @@ void controls() {
   center("hold",22,65,MUTED,1); center("BACK",22,76,MUTED,1);
   center("hold",22,139,MUTED,1); center("MENU",22,150,MUTED,1);
 }
-void action(const char *label,int index=0,int count=0) {
+// Every selectable screen uses this same action, focus, and position indicator.
+void action(const char *label,int index=0,int count=1) {
   frame.fillRoundRect(53,139,262,28,5,GOLD);
-  text(">",60,144,BG,2); center(label,182,153,BG,2);
-  if (count>1) {
-    int start=184-(count-1)*6;
-    for (int i=0;i<count;i++) frame.fillCircle(start+i*12,133,2,i==index?GOLD:LINE);
-  }
+  text(">",60,144,BG,2); text(label,74,144,BG,2);
+  char position[12]; snprintf(position,sizeof(position),"%d/%d",index+1,count);
+  frame.setTextDatum(TR_DATUM); frame.setTextColor(BG); frame.drawString(position,308,149,1); frame.setTextDatum(TL_DATUM);
 }
 void bar(const char *name,int value,int x,int y,int width,uint16_t color) {
   text(name,x,y,MUTED,1); char n[8]; snprintf(n,sizeof(n),"%d",value); text(n,x+width-18,y,INK,1);
@@ -89,14 +88,18 @@ void drawTank(uint32_t now) {
   if (cursor==6) strcpy(label,"ADD A PET");
   else if (cursor==7) strcpy(label,"Evening menu");
   else snprintf(label,sizeof(label),"Visit %s",storage.data.players[cursor].name);
-  action(label);
+  int index=0,total=0;
+  for(int i=0;i<8;i++) if(tankTarget(i)) { if(i==cursor) index=total; ++total; }
+  action(label,index,total);
 }
 void drawName() {
   header("WHO'S PLAYING?");
   center("CHOOSE A NICKNAME",184,48,MUTED,1);
   center(PICKER_NAMES[nameIndex],184,82,MINT,4);
   center("NEXT to browse / OK to choose",184,115,MUTED,1);
-  char label[32]; snprintf(label,sizeof(label),"Use %s",PICKER_NAMES[nameIndex]); action(label);
+  int index=0,total=0;
+  for(int i=0;i<NAME_COUNT;i++) if(!storage.nameUsed(PICKER_NAMES[i])) { if(i==nameIndex) index=total; ++total; }
+  char label[32]; snprintf(label,sizeof(label),"Use %s",PICKER_NAMES[nameIndex]); action(label,index,total);
 }
 void drawPetPicker(uint32_t now) {
   header("ADOPT A PET"); text(PICKER_NAMES[nameIndex],58,41,MUTED,2);
@@ -115,7 +118,7 @@ void drawPet(uint32_t now) {
 }
 void drawFeed(uint32_t now) {
   header("FEED YOUR PET"); text(player().name,58,42,PET_COLORS[player().type],2);
-  text("Simulated input",58,68,MUTED,1); text("MQ-3 not connected",58,84,MUTED,1);
+  text("Simulated input",58,68,MUTED,1); text("Live test is in Menu",58,84,MUTED,1);
   char value[8];
   if (page==SAMPLING) {
     snprintf(value,sizeof(value),"%d",max(1,3-int((now-samplingStart)/1000)));
@@ -151,16 +154,35 @@ void drawHistory() {
     snprintf(row,sizeof(row),"#%lu  Score %u  HP %+d",(unsigned long)r.number,r.score,r.healthDelta);
     text(row,58,52+i*27,INK,1); snprintf(row,sizeof(row),"Fake input %u / %s",r.raw,age); text(row,58,63+i*27,MUTED,1);
   }
-  action("Back to your pet");
+  action("Back to your pet",historyPage,max(1,(int(p.count)+2)/3));
 }
-const char *const MENU_ITEMS[]={"Back to the tank","Demo calibration","Start a new evening"};
+const char *const MENU_ITEMS[]={"Back to the tank","Demo calibration","Start new evening","MQ-3 setup"};
 void drawMenu() {
   header("EVENING MENU");
-  for(int i=0;i<3;i++) {
-    frame.fillRoundRect(54,38+i*30,260,26,4,cursor==i?0x226A:BG);
-    text(cursor==i?">":" ",60,42+i*30,GOLD,2); text(MENU_ITEMS[i],78,42+i*30,cursor==i?INK:MUTED,2);
+  const char *titles[]={"THE TANK","GAME RESPONSE","NEW EVENING","MQ-3 SETUP"};
+  const char *details[]={"Visit your pets or add a friend","Adjust the simulated game input","Clear pets after confirmation","Check live voltage in clean air"};
+  center(titles[cursor],184,65,MINT,4); center(details[cursor],184,97,MUTED,1);
+  center("NEXT to browse / OK to choose",184,120,MUTED,1);
+  action(MENU_ITEMS[cursor],cursor,4);
+}
+void drawSensor(uint32_t now) {
+  header("MQ-3 BENCH TEST");
+  char value[48]; snprintf(value,sizeof(value),"%d mV",mq3.millivolts); text(value,57,39,MINT,4);
+  snprintf(value,sizeof(value),"ADC %d",mq3.raw); text(value,236,43,MUTED,1);
+  snprintf(value,sizeof(value),"%lus open",(unsigned long)((now-mq3.started)/1000)); text(value,236,56,MUTED,1);
+  if(mq3.hasBaseline) snprintf(value,sizeof(value),"Air %d mV / change %+d mV",mq3.baseline,mq3.millivolts-mq3.baseline);
+  else snprintf(value,sizeof(value),"GPIO1 / no air baseline / not BAC");
+  text(value,57,72,MUTED,1);
+  frame.fillRect(55,87,258,27,PANEL);
+  for(int i=1;i<mq3.count;i++) {
+    int a=(mq3.head-mq3.count+i-1+Mq3Monitor::WINDOW)%Mq3Monitor::WINDOW;
+    int b=(a+1)%Mq3Monitor::WINDOW;
+    int ya=112-constrain(int(mq3.readings[a]),0,3100)*24/3100;
+    int yb=112-constrain(int(mq3.readings[b]),0,3100)*24/3100;
+    frame.drawLine(56+(i-1)*256/99,ya,56+i*256/99,yb,GOLD);
   }
-  action("Open selected option");
+  center(mq3.condition(),184,124,mq3.canZero()?MINT:GOLD,1);
+  const char *actions[]={"Zero in clean air","Clear air baseline","Back to menu"}; action(actions[cursor],cursor,3);
 }
 void drawCalibration() {
   header("DEMO CALIBRATION");
@@ -181,6 +203,7 @@ void draw(uint32_t now) {
     case HISTORY: drawHistory(); break;
     case MENU: drawMenu(); break;
     case CALIBRATION: drawCalibration(); break;
+    case SENSOR: drawSensor(now); break;
     case NEW_NIGHT:
       header("NEW EVENING?"); center("Clear all pets & history?",184,61,INK,2);
       center("This cannot be undone.",184,88,MUTED,1);
