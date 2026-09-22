@@ -1,5 +1,6 @@
 """Export the ESP32's rendered framebuffer, not a photo or panel readback."""
 import argparse
+import json
 import time
 from pathlib import Path
 import serial
@@ -18,15 +19,15 @@ device.open()
 with device:
     end=time.monotonic()+1
     while time.monotonic()<end: device.readline()
-    for command in args.command:
-        device.write((command+'\n').encode())
+    for request_id,command in enumerate(args.command,1):
+        device.write((f'@{request_id} '+command+'\n').encode())
         end=time.monotonic()+3
         acknowledged=False
         while time.monotonic()<end:
             line=device.readline()
-            if line.strip()==b'CMD': acknowledged=True
+            if line.startswith(b'CMD'): acknowledged=line.strip()==f'CMD {request_id}'.encode()
             elif acknowledged and line.startswith(b'ERROR'): raise RuntimeError(line.decode().strip())
-            elif acknowledged and line.startswith(b'{'): break
+            elif acknowledged and line.startswith(b'{') and json.loads(line).get('request_id')==request_id: break
         else: raise RuntimeError('Command not acknowledged: '+command)
     device.reset_input_buffer(); device.write(b'screen\n')
     end=time.monotonic()+5

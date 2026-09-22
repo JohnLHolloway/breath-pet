@@ -20,29 +20,47 @@ def check(name,condition):
     if not condition: raise AssertionError(name)
 
 try:
-    with serial.Serial(args.port,115200,timeout=.3,write_timeout=2) as device:
+    device=serial.Serial(None,115200,timeout=.3,write_timeout=2)
+    device.dtr=False; device.rts=False; device.port=args.port; device.open()
+    with device:
         def drain(seconds=1):
             end=time.monotonic()+seconds
             while time.monotonic()<end: device.readline()
 
+        request_counter=[0]
         def cmd(text,marker='{'):
-            device.reset_input_buffer()
-            device.write((text+'\n').encode()); device.flush()
+            request_counter[0]+=1; request_id=request_counter[0]
+            # CMD frames replies; purging USB between requests can discard in-flight packets.
+            device.write((f'@{request_id} '+text+'\n').encode())
             end=time.monotonic()+5
             acknowledged=False
             pending=b''
+            received=[]
+            acknowledged_at=0; queried=False
             while time.monotonic()<end:
+                if acknowledged and not queried and not pending and marker=='{' and time.monotonic()-acknowledged_at>1:
+                    # Recover a missing USB reply with a read, never by replaying an action.
+                    query='history' if text=='history' else 'status'
+                    device.write((f'@{request_id} '+query+'\n').encode()); queried=True
+                    report.setdefault('read_only_reply_recovery',[]).append(text)
                 pending+=device.readline()
                 # A USB read timeout can return part of a line; wait for its newline.
                 if not pending.endswith(b'\n'): continue
                 line=pending.decode(errors='replace').strip()
                 pending=b''
-                if line=='CMD': acknowledged=True
+                received.append(line)
+                if line.startswith('CMD'):
+                    acknowledged=line==f'CMD {request_id}'
+                    if acknowledged: acknowledged_at=time.monotonic()
                 elif acknowledged and line.startswith(marker):
-                    try: return json.loads(line) if marker=='{' else line
+                    try:
+                        result=json.loads(line) if marker=='{' else line
+                        if marker=='{' and result.get('request_id')!=request_id: continue
+                        return result
                     except json.JSONDecodeError:
                         report['invalid_reply']={'command':text,'line':line}
                         raise
+            report['timeout_reply']={'command':text,'lines':received[-4:],'partial':pending.decode(errors='replace')}
             raise TimeoutError(text)
 
         drain(2)
@@ -109,6 +127,29 @@ try:
         cmd('ui next'); s=cmd('ui select'); check('Baseline clear action leaves no zero',s['mq3_baseline_mv']==-1)
         cmd('ui next'); s=cmd('ui select'); check('Monitor exit stops acquisition',s['page']=='menu' and not s['mq3_active'])
         n=s['mq3_samples']; drain(.3); check('ADC stays stopped outside bench screen',cmd('status')['mq3_samples']==n)
+        cmd('test sensor 100'); cmd('input live'); cmd('select 0'); before=cmd('status'); s=cmd('ui select')
+        check('Live feed opens a fresh clean-air preparation',s['sensor']=='MQ3' and s['page']=='feed' and not s['feed_ready'])
+        s=cmd('ui select'); check('Cannot start before clean-air window',s['page']=='feed' and s['feeds']==before['feeds'])
+        drain(11.2); s=cmd('status'); check('Stable fresh air enables live feeding',s['feed_ready'])
+        s=cmd('ui select'); check('Live feed starts sampling',s['page']=='sampling' and s['feed_baseline_mv']==100)
+        cmd('test sensor 400'); drain(12.4); s=cmd('status')
+        check('Measured rise feeds the correct pet once',s['page']=='result' and s['feeds']==before['feeds']+1 and s['score']==46 and s['health']==before['health'])
+        live_history=cmd('history')['history']; r=live_history[0]
+        check('Real history stores provenance and original voltages',r['source']=='MQ3' and r['baseline_mv']==100 and r['peak_mv']==400 and r['span_mv']==600)
+        check('Old demo history stays explicitly demo',live_history[1]['source']=='DEMO')
+        check('Fake serial feed is rejected in live mode',cmd('sample 85','ERROR').startswith('ERROR'))
+        cmd('select 1'); check('Other owner keeps original history',cmd('history')['history']==goose_history)
+        cmd('ui select'); drain(11.2); s=cmd('ui select')
+        check('Lingering vapor cannot feed the next owner',s['page']=='feed' and s['recovering'] and s['feeds']==1)
+        cmd('test sensor 100'); drain(11.2); s=cmd('ui select')
+        check('Recovered sensor can start next owner',s['page']=='sampling')
+        cmd('ui back'); drain(.3); s=cmd('status'); check('Cancelling never records a live feed',s['page']=='pet' and s['feeds']==1)
+        cmd('ui select'); drain(11.2); cmd('ui select'); cmd('test sensor high'); drain(.4); s=cmd('status')
+        check('Out-of-range input aborts without history',s['page']=='feed' and s['feeds']==1)
+        check('Rejected live samples leave history unchanged',cmd('history')['history']==goose_history)
+        cmd('test sensor off'); boot=s['boot']; cmd('reboot','REBOOT'); device.close(); time.sleep(2); device.open(); drain(2)
+        cmd('select 0'); check('Live and demo provenance survive restart',cmd('history')['history']==live_history)
+        cmd('ui menu')
         if not args.keep_demo_roster:
             cmd('ui select') # Back to tank (menu reset cursor is zero).
             cmd('night new CONFIRM')

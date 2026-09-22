@@ -1,19 +1,31 @@
 # Hardware verification - 2026-09-22
 
-Tested on a USB-connected LILYGO T-Display-S3: ESP32-S3 revision 0.2, 16MB flash, approximately 8MB PSRAM. Firmware compiled and flashed successfully, including flash hash verification.
+Tested on a USB-connected LILYGO T-Display-S3: ESP32-S3 revision 0.2, 16MB flash and approximately 8MB PSRAM. Normal firmware version 4 compiled, flashed with hash verification, and booted successfully.
 
-The physical-button redesign puts NEXT and OK in a fixed left rail, aligned to the front buttons with USB on the left. GPIO0 (upper) cycles choices; GPIO14 (lower) confirms the large gold action bar. Holds retain Back and Menu. Every screen now uses the same gold selection bar and numeric position indicator, including the tank, evening menu, result choices, history, adoption, calibration and MQ-3 bench test. The separate vertical evening-menu layout is removed. Only the selected swimming pet shows its name, avoiding colliding labels.
+## Controls and display
 
-The final build passed **55 automated device checks**, using isolated test storage. Normal firmware was restored and the saved pet remained intact; its self-test also passed. Device tests exercise adoption, taken-name skipping, six-player capacity, timed feeding, cooldowns, owner isolation, overload/recovery, persistent stats/history and calibration, malformed input, animation, result navigation, history navigation and new-evening confirmation. The on-device self-test checks stat bounds, capped rewards and the 16-record history ring.
+With USB on the left, GPIO0 (upper front button) cycles NEXT and holds for Back; GPIO14 (lower) confirms OK and holds for Menu. Every selectable page uses the same gold action bar and position counter. The tank animates freely swimming pets and labels only the selected pet. The user previously confirmed the physical panel and both buttons work; latest layouts were reviewed through exported framebuffers, not physical panel readback.
 
-Tests now run under a separate `breath-test` NVS namespace. The test script checks `test_mode` before clearing test data, and `dev.ps1 test` restores normal firmware in a `finally` block. Failed diagnostic runs verified this restoration path; the normal saved pet was still present afterward. Tests do not replace the normal evening.
+Framebuffer review covers the tank, adoption, care, menus, calibration, history and confirmation pages, plus the new live-feed preparation, timed sampling, result and mixed-source history screens. New captures in `docs/screenshots/` use fictional isolated test data and are labeled TEST.
 
-Framebuffer review covered the empty and populated tanks, nickname and species pickers, pet care, feed, overload result, history, menu, calibration and new-evening confirmation. Captures are actual ESP32 rendering, not physical panel readback. Published screenshots use fictional test data and are labeled TEST. Screenshot capture now avoids resetting the board when opening USB and rejects failed navigation commands.
+No touch controller responded after reset or a full I2C scan. The supplied listing depicts the standard board without advertised touch; evidence points to the non-touch variant.
 
-Verification exposed the test reader parsing a partial USB line after a read timeout. It now accumulates fragments until the newline arrives. Firmware status also writes as a single buffered record, with a short USB transmit-lock wait instead of dropping writes immediately when busy.
+## Automated and persistence checks
 
-The user previously confirmed the physical display and both buttons work. The new physical placement is based on the vendor pin map; the new mapping still needs the user's hands-on check. No touch controller responds after reset, including a full I2C scan. The supplied listing depicts the standard board and does not advertise touch; evidence points to the non-touch variant.
+The isolated device suite passed **69 checks**. It covers adoption, taken-name skipping, six-player capacity, timed feeding, cooldowns, owner isolation, overload/recovery, persistent history/calibration, malformed input, animation, menus, confirmation and ADC bench behavior. Live-feeding checks use synthetic ADC injection compiled only into the test build: fresh baseline gating, timed peak capture, source and voltage metadata, cancellation, voltage rejection, recovery shared across owners, and persistence after restart. Normal firmware rejects the injection command.
 
-The MQ-3 bench monitor now reads GPIO1 using 11 dB attenuation, averaged ADC counts and millivolts. Device checks cover menu navigation, acquisition, rejection of a premature baseline, baseline clearing, stopping on exit, and keeping readings out of pet history. Synthetic self-tests also reject drift, low/high voltage and incomplete windows while accepting a quiet window average. Physical MQ-3 wiring and alcohol response remain unverified; raw ADC activity alone does not establish that a sensor is connected.
+The on-device self-test also passed on normal firmware, including legacy schema migration, stat bounds, score limits, timing, recovery guards and history rollover. Actual legacy saved data migrated successfully: the existing pet's name, type, stats, feed count and all original history fields were preserved; the old reading gained an explicit DEMO label. Normal data was never cleared. A subsequent firmware update preserved that migrated history again.
 
-Eight 2 kohm resistors form the 8 kohm/8 kohm divider in docs/mq3-wiring.png. The user has a multimeter and has been asked to measure AO and the divided junction before attaching GPIO1. Pet feeding/history and game calibration remain simulated. The live bench baseline is temporary and never a BAC calibration.
+After the suite, a small serial-calibration mapping correction was verified directly on normal firmware: minus changed 600 to 500 mV; plus restored 600; default restored 600 after another decrement; manual zero was rejected without changing settings. The normal self-test was repeated successfully. These scoped checks supplement the 69-check suite.
+
+Tests use the separate `breath-test` NVS namespace. The test script checks `test_mode` before clearing its data, and `dev.ps1 test` restores normal firmware in a `finally` block. USB replies are transmitted in bounded chunks; clients accumulate partial lines and correlate request IDs. Missing replies are recovered only by read-only queries, never by replaying a feeding action. The successful 69-check run needed no read-only reply recovery.
+
+## Physical sensor evidence and remaining check
+
+The MQ-3 is connected to GPIO1 through the planned 8 kohm/8 kohm divider made from eight 2 kohm resistors, with 5 V power and common ground. The user did not perform the requested multimeter check, so divider wiring and voltage are not independently verified.
+
+A real cup-vapor bench test observed approximately 107 mV in clean air, 414 mV after exposure to 25% sake, and 106 mV after removal. The user confirmed exposure and return to clean air. This establishes qualitative response and recovery, not alcohol concentration or BAC calibration.
+
+Normal firmware now feeds from the real ADC. Its clean-air preparation was verified around 112-114 mV with a quiet window and readiness enabled. The complete physical cup-to-pet feeding remains pending a user-started capture. The automated live-feed tests establish game behavior with synthetic readings; they do not substitute for that physical end-to-end check.
+
+Each live feeding freezes a fresh clean-air baseline, observes 12 seconds of peak voltage, stores MQ3 provenance and the original baseline/peak/span, and then requires recovery before another feeding. The bench monitor remains separate and never writes pet history. All displayed scores are game units, never BAC.

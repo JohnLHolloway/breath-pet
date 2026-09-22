@@ -11,7 +11,7 @@ void center(const char *s,int x,int y,uint16_t color=INK,int font=2) {
   frame.setTextDatum(MC_DATUM); frame.setTextColor(color); frame.drawString(s,x,y,font); frame.setTextDatum(TL_DATUM);
 }
 void header(const char *title) {
-  text(title,55,7,MINT,2); text(BREATH_PET_TEST_MODE?"TEST":(page==SENSOR?"LIVE":"DEMO"),287,12,GOLD,1);
+  text(title,55,7,MINT,2); text(BREATH_PET_TEST_MODE?"TEST":((page==SENSOR || inputLive)?"LIVE":"DEMO"),287,12,GOLD,1);
   frame.drawFastHLine(54,30,259,LINE);
 }
 // The rail lines up with the two physical buttons, with the device held landscape.
@@ -118,6 +118,22 @@ void drawPet(uint32_t now) {
 }
 void drawFeed(uint32_t now) {
   header("FEED YOUR PET"); text(player().name,58,42,PET_COLORS[player().type],2);
+  if(inputLive) {
+    char line[48]; snprintf(line,sizeof(line),"%d mV",mq3.millivolts); center(line,256,52,MINT,2);
+    if(page==SAMPLING) {
+      center("CUP NEAR SENSOR NOW",184,81,GOLD,2);
+      snprintf(line,sizeof(line),"Rise +%d mV / %ds left",max(0,sensorFeed.peak-sensorFeed.baseline),max(0,12-int((now-samplingStart)/1000)));
+      center(line,184,106,MUTED,2); center("Remove cup after 5-10 seconds",184,128,MUTED,1);
+      frame.fillRoundRect(55,145,258,12,4,LINE);
+      int w=min(258,int((now-samplingStart)*258/12000)); if(w>0) frame.fillRoundRect(55,145,max(4,w),12,4,MINT);
+    } else {
+      center("KEEP CUP AWAY",184,78,GOLD,2);
+      const char *hint=!mq3.count?"Checking sensor...":!sensorFeed.recovered(mq3)?"Let sensor recover in clean air":!mq3.canZero()?mq3.condition():mq3.spread()>25?"Wait for signal to settle":"Ready: press OK, then bring cup";
+      center(hint,184,106,MUTED,1);
+      action(sensorFeed.ready(mq3)?"Start live feed":"Wait for clean air");
+    }
+    return;
+  }
   text("Simulated input",58,68,MUTED,1); text("Live test is in Menu",58,84,MUTED,1);
   char value[8];
   if (page==SAMPLING) {
@@ -134,10 +150,12 @@ void drawResult(uint32_t now) {
   Player &p=player(); header("FEED RESULT"); creature(p.type,101,78,4,p.health,p.lastScore,now);
   text(p.name,157,42,PET_COLORS[p.type],2);
   text(resultDelta<0?"TOO MUCH!":"NOM NOM!",157,66,resultDelta<0?RED:MINT,2);
-  char detail[40]; snprintf(detail,sizeof(detail),"Fake score: %u",p.lastScore); text(detail,157,92,MUTED,1);
+  const Sample &r=p.readings[0];
+  char detail[40]; snprintf(detail,sizeof(detail),"%s score: %u",r.source?"Game":"Demo",p.lastScore); text(detail,157,92,MUTED,1);
   if (resultDelta<0) snprintf(detail,sizeof(detail),"Health %d / try Rest",resultDelta);
   else snprintf(detail,sizeof(detail),"Food + joy boosted");
   text(detail,157,108,resultDelta<0?GOLD:MINT,1);
+  if(r.source) { snprintf(detail,sizeof(detail),"MQ-3 rise +%u mV",r.peakMv-r.baselineMv); center(detail,184,128,MUTED,1); }
   action(cursor==0?"Back to the tank":"Visit your pet",cursor,2);
 }
 void drawHistory() {
@@ -151,19 +169,22 @@ void drawHistory() {
       uint32_t seconds=millis()/1000-r.seconds;
       snprintf(age,sizeof(age),"%lum %lus ago",(unsigned long)(seconds/60),(unsigned long)(seconds%60));
     } else snprintf(age,sizeof(age),"earlier session");
-    snprintf(row,sizeof(row),"#%lu  Score %u  HP %+d",(unsigned long)r.number,r.score,r.healthDelta);
-    text(row,58,52+i*27,INK,1); snprintf(row,sizeof(row),"Fake input %u / %s",r.raw,age); text(row,58,63+i*27,MUTED,1);
+    snprintf(row,sizeof(row),"#%lu %s / Score %u / HP %+d",(unsigned long)r.number,r.source?"MQ3":"DEMO",r.score,r.healthDelta);
+    text(row,58,52+i*27,INK,1);
+    if(r.source) snprintf(row,sizeof(row),"+%u mV / %s",r.peakMv-r.baselineMv,age);
+    else snprintf(row,sizeof(row),"Fake %u / %s",r.raw,age);
+    text(row,58,63+i*27,MUTED,1);
   }
   action("Back to your pet",historyPage,max(1,(int(p.count)+2)/3));
 }
-const char *const MENU_ITEMS[]={"Back to the tank","Demo calibration","Start new evening","MQ-3 setup"};
+const char *const MENU_ITEMS[]={"Back to the tank","Response settings","Start new evening","MQ-3 setup","Change input mode"};
 void drawMenu() {
   header("EVENING MENU");
-  const char *titles[]={"THE TANK","GAME RESPONSE","NEW EVENING","MQ-3 SETUP"};
-  const char *details[]={"Visit your pets or add a friend","Adjust the simulated game input","Clear pets after confirmation","Check live voltage in clean air"};
+  const char *titles[]={"THE TANK","GAME RESPONSE","NEW EVENING","MQ-3 SETUP",inputLive?"LIVE MQ-3":"DEMO INPUT"};
+  const char *details[]={"Visit your pets or add a friend","Adjust game sensitivity / not BAC","Clear pets after confirmation","Check live voltage in clean air",inputLive?"OK switches to pretend readings":"OK switches to the real sensor"};
   center(titles[cursor],184,65,MINT,4); center(details[cursor],184,97,MUTED,1);
   center("NEXT to browse / OK to choose",184,120,MUTED,1);
-  action(MENU_ITEMS[cursor],cursor,4);
+  action(MENU_ITEMS[cursor],cursor,5);
 }
 void drawSensor(uint32_t now) {
   header("MQ-3 BENCH TEST");
@@ -185,6 +206,12 @@ void drawSensor(uint32_t now) {
   const char *actions[]={"Zero in clean air","Clear air baseline","Back to menu"}; action(actions[cursor],cursor,3);
 }
 void drawCalibration() {
+  if(inputLive) {
+    header("GAME RESPONSE"); char line[32]; snprintf(line,sizeof(line),"%u mV",storage.data.sensorSpanMv);
+    center(line,184,68,MINT,4); center("Rise above 20mV noise allowance",184,100,MUTED,1);
+    center("Full-scale game score / not BAC",184,118,MUTED,1);
+    const char *actions[]={"More responsive","Less responsive","Default (600 mV)","Back to menu"}; action(actions[cursor],cursor,4); return;
+  }
   header("DEMO CALIBRATION");
   char line[48]; snprintf(line,sizeof(line),"RAW %d     ZERO %u",lastRaw,storage.data.zero); center(line,184,51,MUTED,2);
   snprintf(line,sizeof(line),"Span %u",storage.data.span); center(line,184,83,MINT,4);

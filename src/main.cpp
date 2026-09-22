@@ -12,6 +12,9 @@ TFT_eSPI lcd;
 TFT_eSprite frame(&lcd);
 PartyStorage storage;
 Mq3Monitor mq3;
+SensorFeed sensorFeed;
+bool inputLive=!BREATH_PET_TEST_MODE;
+uint32_t responseId=0;
 TouchLibCSTSelf selfTouch(Wire,18,17,0x15,21);
 TouchLibCSTMutual mutualTouch(Wire,18,17,0x1A,21);
 TouchLibInterface *touch=nullptr;
@@ -30,7 +33,7 @@ const int DEMO_VALUES[]={0,25,50,85};
 const char *notice="";
 uint32_t noticeAt=0;
 
-void status();
+void status(bool waitForSpace=false);
 void message(const char *text);
 void tap(int x,int y);
 #include "hardware.h"
@@ -38,8 +41,9 @@ void tap(int x,int y);
 bool hasPlayer() { return selected>=0 && selected<MAX_PLAYERS && storage.data.players[selected].active; }
 Player &player() { return storage.data.players[selected]; }
 void show(Page next) {
-  if (next==SENSOR && page!=SENSOR) mq3.begin(millis());
-  if (next!=SENSOR) mq3.active=false;
+  if(page==SAMPLING && next!=SAMPLING) sensorFeed.cancel();
+  if ((next==SENSOR && page!=SENSOR) || (next==FEED && inputLive && page!=FEED)) mq3.begin(millis());
+  if (next!=SENSOR && !(inputLive && (next==FEED || next==SAMPLING))) mq3.active=false;
   page=next; cursor=0; notice="";
   if (next==TANK) {
     cursor=6;
@@ -67,14 +71,21 @@ void newNight() {
   lastTick=millis(); show(TANK);
 }
 bool capture(int raw) {
-  if (!hasPlayer() || raw<0 || raw>100 || cooldown(selected)) return false;
+  if (inputLive || !hasPlayer() || raw<0 || raw>100 || cooldown(selected)) return false;
   lastRaw=raw; resultDelta=storage.record(selected,raw,millis());
   fed[selected]=true; fedAt[selected]=millis(); show(RESULT); return true;
 }
 void beginFeed() {
   if (!hasPlayer()) return;
   if (cooldown(selected)) { message("PET IS FULL. WAIT A MOMENT."); return; }
+  if(inputLive && !sensorFeed.start(mq3,millis())) { message("KEEP CUP AWAY; WAIT FOR CLEAN AIR"); return; }
   samplingStart=millis(); show(SAMPLING);
+}
+void finishLiveFeed() {
+  if(!sensorFeed.valid()) { show(FEED); message("NO READING SAVED: CHECK SIGNAL"); return; }
+  int raw=sensorScore(sensorFeed.baseline,sensorFeed.peak,storage.data.sensorSpanMv);
+  resultDelta=storage.record(selected,raw,millis(),1,sensorFeed.baseline,sensorFeed.peak);
+  fed[selected]=true; fedAt[selected]=millis(); show(RESULT);
 }
 void restPet() {
   if (!hasPlayer()) return;
@@ -82,6 +93,13 @@ void restPet() {
   storage.rest(selected); rested[selected]=true; restedAt[selected]=millis(); message("A LITTLE REST: +8 HEALTH");
 }
 void calibrate(int action) {
+  if(inputLive) {
+    if(action==0) storage.data.sensorSpanMv=max(100,int(storage.data.sensorSpanMv)-100);
+    if(action==1) storage.data.sensorSpanMv=min(2000,int(storage.data.sensorSpanMv)+100);
+    if(action==2) storage.data.sensorSpanMv=600;
+    if(action==3) { show(MENU); return; }
+    storage.save(); return;
+  }
   if (action==0) storage.data.zero=lastRaw;
   if (action==1) { storage.data.zero=0; storage.data.span=100; }
   if (action==2) storage.data.span=max(25,int(storage.data.span)-25);
@@ -115,10 +133,10 @@ void next() {
     case NAME_PICK: nextName(); break;
     case PET_PICK: petIndex=(petIndex+1)%PET_TYPES; break;
     case PET: cursor=(cursor+1)%3; break;
-    case FEED: demoIndex=(demoIndex+1)%4; break;
+    case FEED: if(!inputLive) demoIndex=(demoIndex+1)%4; break;
     case RESULT: cursor=1-cursor; break;
     case HISTORY: historyPage=(historyPage+1)%max(1,(int(player().count)+2)/3); break;
-    case MENU: cursor=(cursor+1)%4; break;
+    case MENU: cursor=(cursor+1)%5; break;
     case SENSOR: cursor=(cursor+1)%3; break;
     case CALIBRATION: cursor=(cursor+1)%4; break;
     case NEW_NIGHT: cursor=1-cursor; break;
@@ -144,7 +162,8 @@ void activate() {
     case RESULT: show(cursor==0?TANK:PET); break;
     case HISTORY: show(PET); break;
     case MENU:
-      if (cursor==0) show(TANK); else if (cursor==1) show(CALIBRATION); else if (cursor==2) show(NEW_NIGHT); else show(SENSOR);
+      if (cursor==0) show(TANK); else if (cursor==1) show(CALIBRATION); else if (cursor==2) show(NEW_NIGHT); else if(cursor==3) show(SENSOR);
+      else { inputLive=!inputLive; message(inputLive?"LIVE MQ-3 FEEDING ENABLED":"DEMO FEEDING ENABLED"); }
       break;
     case SENSOR:
       if (cursor==2) show(MENU);
@@ -182,11 +201,15 @@ void tap(int x,int y) {
 
 #include "ui.h"
 
-void status() {
-  if (Serial.availableForWrite()<2048) return;
+void status(bool waitForSpace) {
+  uint32_t started=millis();
+  while(Serial.availableForWrite()<2048) {
+    if(!waitForSpace || millis()-started>=500) return;
+    delay(1);
+  }
   char record[1536];
-  size_t length=snprintf(record,sizeof(record),"{\"app\":\"breath-pet\",\"version\":3,\"sensor\":\"SIMULATED\",\"page\":\"%s\",\"cursor\":%d,\"selected\":%d,\"players\":%d,\"night\":%lu,\"boot\":%lu,\"zero\":%u,\"span\":%u,\"display\":%s,\"psram\":%u,\"frames\":%lu,\"uptime_ms\":%lu,\"touch\":\"%s\",\"touch_taps\":%lu,\"care_presses\":%lu,\"sample_presses\":%lu,\"storage_ok\":%s,\"demo_raw\":%d,\"picker_name\":\"%s\",\"picker_pet\":%d,\"cooldown_ms\":%lu",
-    PAGE_NAMES[page],cursor,selected,storage.count(),(unsigned long)storage.data.night,
+  size_t length=snprintf(record,sizeof(record),"{\"app\":\"breath-pet\",\"version\":4,\"sensor\":\"%s\",\"page\":\"%s\",\"cursor\":%d,\"selected\":%d,\"players\":%d,\"night\":%lu,\"boot\":%lu,\"zero\":%u,\"span\":%u,\"display\":%s,\"psram\":%u,\"frames\":%lu,\"uptime_ms\":%lu,\"touch\":\"%s\",\"touch_taps\":%lu,\"care_presses\":%lu,\"sample_presses\":%lu,\"storage_ok\":%s,\"demo_raw\":%d,\"picker_name\":\"%s\",\"picker_pet\":%d,\"cooldown_ms\":%lu",
+    inputLive?"MQ3":"SIMULATED",PAGE_NAMES[page],cursor,selected,storage.count(),(unsigned long)storage.data.night,
     (unsigned long)storage.data.boot,storage.data.zero,storage.data.span,displayReady?"true":"false",
     ESP.getPsramSize(),(unsigned long)frames,(unsigned long)millis(),touchName,(unsigned long)touchTaps,
     (unsigned long)carePresses,(unsigned long)samplePresses,storage.lastWriteOK?"true":"false",
@@ -194,17 +217,27 @@ void status() {
   if (hasPlayer()) length+=snprintf(record+length,sizeof(record)-length,",\"name\":\"%s\",\"pet_type\":%u,\"health\":%u,\"food\":%u,\"joy\":%u,\"score\":%u,\"feeds\":%lu,\"history_count\":%u,\"mood\":\"%s\"",
     player().name,player().type,player().health,player().food,player().joy,player().lastScore,
     (unsigned long)player().feeds,player().count,mood(player()));
-  length+=snprintf(record+length,sizeof(record)-length,",\"test_mode\":%s,\"mq3_active\":%s,\"mq3_mv\":%d,\"mq3_adc\":%d,\"mq3_samples\":%lu,\"mq3_spread_mv\":%d,\"mq3_can_zero\":%s,\"mq3_baseline_mv\":%d}\n",
+  length+=snprintf(record+length,sizeof(record)-length,",\"test_mode\":%s,\"mq3_active\":%s,\"mq3_mv\":%d,\"mq3_adc\":%d,\"mq3_samples\":%lu,\"mq3_spread_mv\":%d,\"mq3_can_zero\":%s,\"mq3_baseline_mv\":%d",
     BREATH_PET_TEST_MODE?"true":"false",mq3.active?"true":"false",mq3.millivolts,mq3.raw,(unsigned long)mq3.samples,mq3.spread(),mq3.canZero()?"true":"false",mq3.hasBaseline?mq3.baseline:-1);
-  Serial.write(reinterpret_cast<const uint8_t *>(record),length);
+  length+=snprintf(record+length,sizeof(record)-length,",\"feed_ready\":%s,\"feed_baseline_mv\":%d,\"feed_peak_mv\":%d,\"sensor_span_mv\":%u,\"recovering\":%s,\"request_id\":%lu}\n",
+    (page==FEED && inputLive && sensorFeed.ready(mq3))?"true":"false",sensorFeed.baseline,sensorFeed.peak,storage.data.sensorSpanMv,sensorFeed.recovered(mq3)?"false":"true",(unsigned long)responseId);
+  // Small writes also handle the hardware USB CDC ring buffer wrapping.
+  size_t offset=0; uint32_t progress=millis();
+  while(offset<length) {
+    size_t n=Serial.write(reinterpret_cast<const uint8_t *>(record)+offset,min(size_t(256),length-offset));
+    offset+=n;
+    if(n) progress=millis();
+    else if(millis()-progress>=500) break;
+    delay(1);
+  }
 }
 void historyStatus() {
   if (!hasPlayer()) { Serial.println("ERROR select a pet first"); return; }
-  Serial.printf("{\"owner\":\"%s\",\"history\":[",player().name);
+  Serial.printf("{\"request_id\":%lu,\"owner\":\"%s\",\"history\":[",(unsigned long)responseId,player().name);
   for (int i=0;i<player().count;i++) {
     const Sample &r=player().readings[i];
-    Serial.printf("%s{\"n\":%lu,\"boot\":%lu,\"seconds\":%lu,\"raw\":%u,\"score\":%u,\"health_delta\":%d}",i?",":"",
-      (unsigned long)r.number,(unsigned long)r.boot,(unsigned long)r.seconds,r.raw,r.score,r.healthDelta);
+    Serial.printf("%s{\"n\":%lu,\"boot\":%lu,\"seconds\":%lu,\"raw\":%u,\"score\":%u,\"health_delta\":%d,\"source\":\"%s\",\"baseline_mv\":%u,\"peak_mv\":%u,\"span_mv\":%u}",i?",":"",
+      (unsigned long)r.number,(unsigned long)r.boot,(unsigned long)r.seconds,r.raw,r.score,r.healthDelta,r.source?"MQ3":"DEMO",r.baselineMv,r.peakMv,r.spanMv);
   }
   Serial.println("]}");
 }
@@ -217,7 +250,9 @@ void selfTest() {
   for (int i=0;i<30;i++) feedPlayer(p,100);
   ok &= p.health==0 && p.joy==0 && p.food==100;
   ok &= gameScore(20,45,100)==0 && gameScore(85,45,25)==100;
-  PartyStorage scratch;
+  static const PartyData freshParty;
+  static const LegacyPartyData freshLegacy;
+  static PartyStorage scratch; scratch.data=freshParty;
   int first=scratch.join("CAPTAIN",0),second=scratch.join("GOOSE",1);
   ok &= first==0 && second==1 && scratch.join("CAPTAIN",2)==-1;
   for (int i=0;i<20;i++) scratch.record(first,i,1000+i);
@@ -233,6 +268,25 @@ void selfTest() {
   ok &= !bench.canZero();
   for(int i=0;i<100;i++) bench.ingest(2900,4000);
   ok &= !bench.canZero();
+  static LegacyPartyData old; old=freshLegacy; old.boot=4; old.zero=12; old.span=75;
+  strcpy(old.players[0].name,"CAPTAIN"); old.players[0].active=1; old.players[0].feeds=1; old.players[0].count=1;
+  old.players[0].readings[0].raw=25; old.players[0].readings[0].number=7;
+  static PartyData migrated; migrated=PartyStorage::migrate(old);
+  ok &= storage.valid(migrated) && migrated.boot==4 && migrated.zero==12 && migrated.span==75;
+  ok &= !strcmp(migrated.players[0].name,"CAPTAIN") && migrated.players[0].readings[0].number==7 && !migrated.players[0].readings[0].source;
+  bench=Mq3Monitor(); bench.active=true; SensorFeed trial;
+  for(int i=0;i<99;i++) bench.ingest(100,100);
+  ok &= !trial.start(bench,1000); bench.ingest(100,100);
+  ok &= trial.start(bench,1000);
+  for(int i=0;i<100;i++) trial.accept(400);
+  ok &= trial.valid() && !trial.done(12999) && trial.done(13000) && trial.peak==400;
+  ok &= sensorScore(100,120,600)==0 && sensorScore(100,400,600)==46 && sensorScore(100,900,600)==100;
+  trial.cancel(); for(int i=0;i<100;i++) bench.ingest(400,400);
+  ok &= !trial.ready(bench); for(int i=0;i<100;i++) bench.ingest(110,110);
+  ok &= trial.start(bench,20000); trial.accept(0); ok &= trial.invalid && !trial.valid();
+  scratch.record(second,46,2000,1,100,400);
+  const Sample &measured=scratch.data.players[second].readings[0];
+  ok &= measured.source==1 && measured.score==46 && measured.baselineMv==100 && measured.peakMv==400 && measured.spanMv==600;
   Serial.printf("SELFTEST %s game rules, stat bounds, calibration, sensor baseline guards, saved schema, framebuffer, PSRAM\n",ok?"PASS":"FAIL");
 }
 
@@ -265,7 +319,7 @@ bool numberAfter(const String &s,const char *prefix,int &value) {
 }
 void command(const String &cmd) {
   int value;
-  if (cmd=="status") { status(); return; }
+  if (cmd=="status") { status(true); return; }
   if (cmd=="history") { historyStatus(); return; }
   if (cmd=="selftest") { selfTest(); return; }
   if (cmd=="screen") { screenshot(); return; }
@@ -274,11 +328,17 @@ void command(const String &cmd) {
     for (int a=1;a<127;a++) { Wire.beginTransmission(a); if (!Wire.endTransmission()) Serial.printf("I2C 0x%02X\n",a); }
     Serial.printf("TOUCHSCAN %s\n",touchName); return;
   }
+#if BREATH_PET_TEST_MODE
+  if(numberAfter(cmd,"test sensor ",value) && value<=999) { mq3.injectedMv=value; status(true); return; }
+  if(cmd=="test sensor high") { mq3.injectedMv=2900; status(true); return; }
+  if(cmd=="test sensor off") { mq3.injectedMv=-1; status(true); return; }
+#endif
   if (cmd=="ui next") next();
   else if (cmd=="ui select") activate();
   else if (cmd=="ui back") back();
   else if (cmd=="ui menu") show(MENU);
   else if (cmd=="tank") show(TANK);
+  else if (cmd=="input live" || cmd=="input demo") { inputLive=cmd=="input live"; show(TANK); }
   else if (cmd=="sensor open") show(SENSOR);
   else if (cmd=="sensor zero") {
     if (!mq3.zero()) { Serial.println("ERROR need 10s quiet input between 50 and 2700 mV"); return; }
@@ -299,14 +359,17 @@ void command(const String &cmd) {
     if (!capture(value)) { Serial.println("ERROR select pet or wait for cooldown"); return; }
   }
   else if (cmd=="rest" && hasPlayer()) restPet();
-  else if (cmd=="cal zero") calibrate(0);
-  else if (cmd=="cal default") calibrate(1);
-  else if (cmd=="cal minus") calibrate(2);
-  else if (cmd=="cal plus") calibrate(3);
+  else if (cmd=="cal zero") {
+    if(inputLive) { Serial.println("ERROR live feeds set a fresh baseline automatically"); return; }
+    calibrate(0);
+  }
+  else if (cmd=="cal default") calibrate(inputLive?2:1);
+  else if (cmd=="cal minus") calibrate(inputLive?0:2);
+  else if (cmd=="cal plus") calibrate(inputLive?1:3);
   else if (cmd=="reboot") { Serial.println("REBOOT"); delay(100); ESP.restart(); return; }
-  else if (cmd=="help") { Serial.println("status | join NAME TYPE(0..5) | select SLOT(0..5) | sample 0..100 | history | rest | tank | ui next/select/back/menu | cal zero/default/minus/plus | sensor open/zero/clear | night new CONFIRM | touchscan | selftest | screen | reboot"); return; }
+  else if (cmd=="help") { Serial.println("status | join NAME TYPE(0..5) | select SLOT(0..5) | sample 0..100 | history | rest | tank | ui next/select/back/menu | cal zero/default/minus/plus | sensor open/zero/clear | input live/demo | night new CONFIRM | touchscan | selftest | screen | reboot"); return; }
   else { Serial.println("ERROR unknown or invalid command"); return; }
-  status();
+  status(true);
 }
 
 void setup() {
@@ -339,15 +402,28 @@ void loop() {
   while (Serial.available() && budget-->0) {
     char c=Serial.read();
     if (c=='\n') {
-      Serial.println("CMD"); // Separates command replies from periodic status records.
+      input.trim(); responseId=0;
+      if(input.startsWith("@")) {
+        int space=input.indexOf(' ');
+        if(space>1 && space<=10) {
+          bool digits=true; for(int i=1;i<space;i++) digits &= isDigit(input[i]);
+          if(digits) { responseId=strtoul(input.substring(1,space).c_str(),nullptr,10); input=input.substring(space+1); }
+        }
+      }
+      if(responseId) Serial.printf("CMD %lu\n",(unsigned long)responseId);
+      else Serial.println("CMD");
       if (overflow) Serial.println("ERROR command too long");
       else { input.trim(); if (input.length()) command(input); }
       input=""; overflow=false;
+      responseId=0;
     } else if (c!='\r') { if (input.length()<64) input+=c; else overflow=true; }
   }
   now=millis(); // Commands may reset timers or take time (e.g. screenshot).
-  mq3.poll(now);
-  if (page==SAMPLING && now-samplingStart>=3000) capture(DEMO_VALUES[demoIndex]);
+  bool sampled=mq3.poll(now);
+  if(page==SAMPLING && inputLive) {
+    if(sampled) sensorFeed.accept(mq3.millivolts);
+    if(sensorFeed.invalid || sensorFeed.done(now)) finishLiveFeed();
+  } else if (page==SAMPLING && now-samplingStart>=3000) capture(DEMO_VALUES[demoIndex]);
   if (now-lastTick>=60000) { lastTick=now; storage.tick(); }
   if (displayReady && now-lastFrame>=80) { lastFrame=now; draw(now); }
   if (now-lastStatus>=5000) { lastStatus=now; status(); }

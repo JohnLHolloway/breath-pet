@@ -42,7 +42,7 @@ Never connect the module's AO or DO directly to an ESP32 input. The sensor heate
 
 Hold the lower button to open the evening menu. Press NEXT until **MQ-3 setup**, then OK.
 
-The monitor shows actual GPIO1 millivolts, raw 12-bit ADC counts, a fixed 0-3100 mV trend graph, and elapsed time since opening the screen. This timer is **not** verified heater warm-up time. The ADC uses 11 dB attenuation and averages four conversions every 100 ms. It runs only while this screen is open.
+The monitor shows actual GPIO1 millivolts, raw 12-bit ADC counts, a fixed 0-3100 mV trend graph, and elapsed time since opening the screen. This timer is **not** verified heater warm-up time. The ADC uses 11 dB attenuation and averages four conversions every 100 ms. Acquisition runs in this screen and during live feed preparation/capture.
 
 Leave the sensor in clean air. The first ten seconds fill a 100-sample window. **Zero in clean air** accepts a temporary baseline only when the latest reading is between 50 and 2700 mV and the window spread is at most 50 mV. These are bench-test checks, not a sensor-readiness or accuracy guarantee. A quiet floating input can still look plausible; verify the actual wiring with the meter. Low or high input prompts a wiring check.
 
@@ -52,8 +52,12 @@ No drinking is required to verify power, divider voltage, ADC operation or clean
 
 Brand-new sensors need conditioning before repeatable comparisons. The Winsen MQ-3 manual specifies more than 48 hours of preheat under its standard test conditions. The exact sensor on this reseller module is unverified, so use its own datasheet when available. A quiet ten-second trace is not a substitute for conditioning. [Winsen MQ-3 manual](https://cdn.sparkfun.com/datasheets/Sensors/Biometric/MQ-3%20ver1.3%20-%20Manual.pdf)
 
-## What is and is not enabled
+## Live feeding is enabled
 
-**Enabled:** live ADC bench readings, voltage trend, input-range/drift checks, temporary clean-air zero, and serial diagnostics (`sensor open`, `sensor zero`, `sensor clear`). Status fields include `mq3_active`, `mq3_mv`, `mq3_adc`, `mq3_samples`, `mq3_spread_mv`, `mq3_can_zero` and `mq3_baseline_mv` (-1 means unset).
+Normal firmware boots into real MQ-3 feeding. Select a pet, choose Feed your pet, and leave the sensor in clean air until Start live feed appears. Press OK before bringing the cup near the sensor. Keep it dry; remove the cup after 5–10 seconds. The firmware records a 12-second peak response and shows a game score, never BAC.
 
-**Still simulated:** pet feeding, pet history and the demo zero/span calibration. Bench readings never alter pet stats or enter personal histories. Connecting real sensor samples to feeding requires verifying wiring, conditioning, response and recovery, then selecting a game-response mapping. No BAC conversion is implemented.
+Each feed uses a new quiet 100-sample baseline. The next player waits for recovery toward the previous baseline. Cancelling or detecting invalid input creates no reading. See [README.md](README.md) for exact thresholds and the initial 600 mV game scale. A zero-rise clean-air sample feeds the pet too.
+
+Live history is tagged MQ3 and stores baseline mV, peak mV and the scale at capture. Existing fake readings stay labeled DEMO. Menu → Change input mode offers demo mode; normal firmware returns to live mode after reboot. Bench zero is independent from feeding's automatically captured baseline.
+
+The recorded cup test rose from about 107 mV to 414 mV and returned to 106 mV after removal. The user confirmed connecting the sensor but skipped the proposed multimeter test; the divider has not been independently verified. Response and recovery do not establish wiring safety or BAC accuracy.

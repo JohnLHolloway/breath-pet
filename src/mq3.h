@@ -1,13 +1,16 @@
 #pragma once
 #include <Arduino.h>
 
-// Bench diagnostics only. Voltages never enter the pet score or saved history.
+// Shared ADC acquisition for bench diagnostics and live feeding.
 struct Mq3Monitor {
   static constexpr int PIN=1, WINDOW=100;
   uint16_t readings[WINDOW]={};
   int count=0,head=0,millivolts=0,raw=0,baseline=0;
   bool active=false,hasBaseline=false;
   uint32_t started=0,lastSample=0,samples=0;
+#if BREATH_PET_TEST_MODE
+  int injectedMv=-1; // Test firmware only; never available in a normal build.
+#endif
 
   void begin(uint32_t now) {
     pinMode(PIN,INPUT);
@@ -21,12 +24,16 @@ struct Mq3Monitor {
     readings[head]=mv; head=(head+1)%WINDOW;
     count=min(WINDOW,count+1); ++samples;
   }
-  void poll(uint32_t now) {
-    if (!active || now-lastSample<100) return;
+  bool poll(uint32_t now) {
+    if (!active || now-lastSample<100) return false;
     lastSample=now;
+#if BREATH_PET_TEST_MODE
+    if(injectedMv>=0) { ingest(injectedMv,injectedMv*4095/3100); return true; }
+#endif
     uint32_t mv=0,adc=0;
     for(int i=0;i<4;i++) { mv+=analogReadMilliVolts(PIN); adc+=analogRead(PIN); }
     ingest((mv+2)/4,(adc+2)/4);
+    return true;
   }
   int spread() const {
     if (!count) return 0;
@@ -54,4 +61,26 @@ struct Mq3Monitor {
     if (spread()>50) return "DRIFTING - LET IT SETTLE";
     return "QUIET SIGNAL / NOT CALIBRATED";
   }
+};
+
+struct SensorFeed {
+  static constexpr uint32_t DURATION=12000;
+  bool running=false,invalid=false,needsRecovery=false;
+  int baseline=0,peak=0,samples=0;
+  uint32_t started=0;
+  bool recovered(const Mq3Monitor &m) const { return !needsRecovery || m.mean()<=baseline+30; }
+  bool ready(const Mq3Monitor &m) const { return m.canZero() && m.spread()<=25 && recovered(m); }
+  bool start(const Mq3Monitor &m,uint32_t now) {
+    if(!ready(m)) return false;
+    baseline=m.mean(); peak=baseline; samples=0; invalid=false;
+    started=now; running=true; needsRecovery=true; return true;
+  }
+  void accept(int mv) {
+    if(!running) return;
+    ++samples; peak=max(peak,mv);
+    if(mv<20 || mv>2700) invalid=true;
+  }
+  bool done(uint32_t now) const { return running && now-started>=DURATION; }
+  bool valid() const { return !invalid && samples>=80; }
+  void cancel() { running=false; }
 };
